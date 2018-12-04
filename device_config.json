@@ -1,0 +1,13 @@
+{
+    "onvif":[
+        {
+            "title":"xxxxx",
+            "channel_id":xx,
+            "url": "xxx",
+            "user": "xxx",
+            "passwd": "xxx",
+            "desc":"xxx",
+            "defaultlevel": x
+        }
+    ]
+}
