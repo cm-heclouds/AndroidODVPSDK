@@ -1,0 +1,13 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onenet_logo_name">视频能力·推流端 V1.0.0</string>
+    <string name="regcode">注册码</string>
+    <string name="auth_info">鉴权信息</string>
+    <string name="app_name">VideoOdvp</string>
+    <string name="live_indicator">推流</string>
+    <string name="start_recording">开始录制</string>
+    <string name="login">登录</string>
+    <string name="start_broadcasting">开始推流</string>
+    <string name="loading">LOADING</string>
+    <string name="stop_broadcasting">停止推流</string>
+    <string name="on_disconnect">设备在其他地方登录</string>
+</resources>

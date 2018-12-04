@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:id="@+id/layout_root"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+
+    <ImageView
+        android:layout_width="73dp"
+        android:layout_height="71dp"
+        android:layout_marginTop="130dp"
+        android:background="@mipmap/onenetlogo"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingBottom="53dp"
+        android:gravity="bottom"
+        android:textColor="@color/colorText3"
+        android:textSize="14dp"
+        android:text="@string/onenet_logo_name"/>
+</LinearLayout>

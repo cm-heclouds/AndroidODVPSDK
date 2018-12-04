@@ -1,0 +1,124 @@
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.ont.odvp.sample.publish.PublishActivity"
+    android:id="@+id/root_layout">
+
+    <!--
+    <com.google.android.exoplayer.AspectRatioFrameLayout
+        android:id="@+id/cameraPreview_afl"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true"
+        >
+        -->
+    <com.ont.odvp.sample.publish.OntGLSurfaceView
+        android:id="@+id/cameraPreview_surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:visibility="visible"
+        android:layout_gravity="center" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/transparent_cover"
+        android:background="#77000000"/>
+    <!--
+   </com.google.android.exoplayer.AspectRatioFrameLayout>
+    -->
+
+
+    <RelativeLayout
+        android:id="@+id/top_title"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_alignParentTop="true"
+        android:padding="4dp"
+        android:orientation="horizontal"
+        android:visibility="visible"
+        android:layout_alignParentStart="true" >
+
+        <TextView
+            android:id="@+id/stream_live_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="13dp"
+            android:layout_centerVertical="true"
+            android:textColor="#ffffffff"
+            android:textSize="12sp"
+            android:text="@string/live_indicator"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="13dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/changeCameraButton"
+                android:layout_width="18dp"
+                android:layout_height="17dp"
+                android:onClick="changeCamera"
+                android:background="@mipmap/changecamera" />
+
+            <ImageButton
+                android:id="@+id/settings_button"
+                android:layout_width="18dp"
+                android:layout_height="17dp"
+                android:layout_marginLeft="26dp"
+                android:background="@mipmap/resolution" />
+
+            <ImageButton
+                android:id="@+id/exitButton"
+                android:layout_width="18dp"
+                android:layout_height="17dp"
+                android:layout_marginLeft="26dp"
+                android:background="@mipmap/exit" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="103dp"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="45dp">
+
+            <Button
+                android:id="@+id/toggle_record"
+                android:layout_marginLeft="21dp"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:textColor="@color/colorActivatedLine"
+                android:textSize="11sp"
+                android:text="@string/start_recording"
+                android:background="@drawable/btn_background_1" />
+
+            <Button
+                android:id="@+id/toggle_broadcasting"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="21dp"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:textColor="@color/colorActivatedLine"
+                android:textSize="11sp"
+                android:text="@string/start_broadcasting"
+                android:background="@drawable/btn_background_1" />
+        </LinearLayout>
+    </LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

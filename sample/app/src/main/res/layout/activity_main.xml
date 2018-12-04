@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="140dp">
+
+        <TextView
+            android:layout_width="77dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textSize="13sp"
+            android:textColor="@color/colorText0"
+            android:text="@string/regcode" />
+
+        <EditText
+            android:id="@+id/reg_code"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingLeft="98dp"
+            android:textSize="13dp"
+            android:background="@drawable/edit_text_background" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="12dp">
+
+        <TextView
+            android:layout_width="77dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textSize="13dp"
+            android:textColor="@color/colorText0"
+            android:text="@string/auth_info" />
+
+        <EditText
+            android:id="@+id/auth_info"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingLeft="98dp"
+            android:textSize="13dp"
+            android:background="@drawable/edit_text_background"/>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/text_push"
+        android:layout_width="317dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="40dp"
+        android:gravity="center"
+        android:enabled="false"
+        android:textSize="13dp"
+        android:textColor="@color/colorText1"
+        android:text="@string/login"
+        android:background="@drawable/btn_background_0"/>
+</LinearLayout>
