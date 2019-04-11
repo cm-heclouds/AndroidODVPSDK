@@ -42,7 +42,7 @@ static t_dev_record_ctx * _ont_record_get_channel(void *dev, int32_t channel)
 }
 
 
-int ont_record_channel_cmd_update(void *dev, int32_t channel, int32_t status, int32_t seconds, char url[255])
+int32_t ont_record_channel_cmd_update(void *dev, int32_t channel, int32_t status, int32_t seconds, char url[255])
 {
 	if (_g_records == NULL)
 	{
@@ -190,11 +190,6 @@ t_dev_record_ctx* ont_record_start(void *dev, int32_t channel, void *onvif_ctx)
         return NULL;
     }
 }
-
-
-#if 0 /* unused variable */
-static char _h264_delimiter[] = { 0x00, 0x00, 0x00, 0x01 };
-#endif
 
 int ont_record_append_video( void *dev, int32_t channel,  uint64_t ts, char *data, int32_t len, uint8_t isKeyframe)
 {
@@ -419,7 +414,8 @@ t_rtmp_vod_ctx* ont_record_send_start(void *dev, int32_t channel)
     rc->state = 4;
 
     return ctx;
-}
+}
+
 
 
 

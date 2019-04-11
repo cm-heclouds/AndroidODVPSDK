@@ -17,6 +17,7 @@
 
 static int _ont_videocmd_stream_ctrl(ont_device_t *dev, cJSON *cmd, ont_cmd_callbacks_t *callback)
 {
+#if 0 /* Segmentation fault (core dumped) when other keys in cmd */
 	RTMP_Log(RTMP_LOGINFO, "channel %d, level %d ", cJSON_GetObjectItem(cmd, "channel_id")->valueint,
 		cJSON_GetObjectItem(cmd, "level")->valueint);
 
@@ -27,11 +28,34 @@ static int _ont_videocmd_stream_ctrl(ont_device_t *dev, cJSON *cmd, ont_cmd_call
 	return callback->stream_ctrl(dev,
 		cJSON_GetObjectItem(cmd, "channel_id")->valueint,
 		cJSON_GetObjectItem(cmd, "level")->valueint);
+#endif
+	int level = 0;
+	int chan_id = 0;
+	cJSON *pv = NULL;
+
+	if (cJSON_HasObjectItem(cmd, "channel_id")) {
+		pv = cJSON_GetObjectItem(cmd, "channel_id");
+		chan_id = pv ? pv->valueint : chan_id;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "level")) {
+		pv = cJSON_GetObjectItem(cmd, "level");
+		level = pv ? pv->valueint : level;
+	}
+
+	RTMP_Log(RTMP_LOGINFO, "channel %d, level %d ", chan_id, level);
+
+	if (!callback->stream_ctrl)
+	{
+		return ONT_ERR_INTERNAL;
+	}
+	return callback->stream_ctrl(dev, chan_id, level);
 }
 
 
 static int _ont_videcmd_ptz_ctrl(ont_device_t *dev, cJSON *cmd, ont_cmd_callbacks_t *callback)
 {
+#if 0 /* Segmentation fault (core dumped) when other keys in cmd */
 	RTMP_Log(RTMP_LOGINFO, "live channel %d, cmd %d, stop%d, speed %d",
 		cJSON_GetObjectItem(cmd, "channel_id")->valueint,
 		cJSON_GetObjectItem(cmd, "cmd")->valueint,
@@ -47,6 +71,43 @@ static int _ont_videcmd_ptz_ctrl(ont_device_t *dev, cJSON *cmd, ont_cmd_callback
 		cJSON_GetObjectItem(cmd, "stop")->valueint,
 		(t_ont_video_ptz_cmd)cJSON_GetObjectItem(cmd, "cmd")->valueint,
 		cJSON_GetObjectItem(cmd, "speed")->valueint);
+#endif
+	int stop = -1;
+	int speed = -1;
+	int chan_id = -1;
+	int sub_cmd = -1;
+	cJSON *pv = NULL;
+
+	if (cJSON_HasObjectItem(cmd, "channel_id")) {
+		pv = cJSON_GetObjectItem(cmd, "channel_id");
+		chan_id = pv ? pv->valueint : chan_id;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "stop")) {
+		pv = cJSON_GetObjectItem(cmd, "stop");
+		stop = pv ? pv->valueint : stop;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "cmd")) {
+		pv = cJSON_GetObjectItem(cmd, "cmd");
+		sub_cmd = pv ? pv->valueint : sub_cmd;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "speed")) {
+		pv = cJSON_GetObjectItem(cmd, "speed");
+		speed = pv ? pv->valueint : speed;
+	}
+
+	RTMP_Log(RTMP_LOGINFO, "live channel %d, cmd %d, stop%d, speed %d",
+			 chan_id, sub_cmd, stop, speed);
+
+
+	if (!callback->ptz_ctrl)
+	{
+		return ONT_ERR_INTERNAL;
+	}
+
+	return callback->ptz_ctrl(dev, chan_id, stop, (t_ont_video_ptz_cmd)sub_cmd, speed);
 }
 
 
@@ -65,14 +126,40 @@ static int _ont_videcmd_rvod_rsp(ont_device_t *dev, cJSON *rsp, const char *uuid
 
 static int _ont_videcmd_rvod_query(ont_device_t *dev, cJSON *cmd, const char *uuid, ont_cmd_callbacks_t *callback)
 {
-	char   *start_time=NULL;
+	char   *start_time = NULL;
 	char   *stop_time = NULL;
-	int channelid = cJSON_GetObjectItem(cmd, "channel_id")->valueint;
-	int page = cJSON_GetObjectItem(cmd, "page")->valueint;
-	int max = cJSON_GetObjectItem(cmd, "per_page")->valueint;
-
+	int channelid = 0;  /* cJSON_GetObjectItem(cmd, "channel_id")->valueint; */
+	int page = 0;       /* cJSON_GetObjectItem(cmd, "page")->valueint; */
+	int max = 0;        /* cJSON_GetObjectItem(cmd, "per_page")->valueint; */
+	cJSON *pv = NULL;
 	int start_index = (page - 1)*max;
 
+	if (cJSON_HasObjectItem(cmd, "channel_id") ){
+		pv = cJSON_GetObjectItem(cmd, "channel_id");
+		channelid = pv ? pv->valueint : channelid;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "page") ){
+		pv = cJSON_GetObjectItem(cmd, "page");
+		page = pv ? pv->valueint : page;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "per_page")) {
+		pv = cJSON_GetObjectItem(cmd, "per_page");
+		max = pv ? pv->valueint : max;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "start_time")) {
+		pv = cJSON_GetObjectItem(cmd, "start_time");
+		start_time = pv ? pv->valuestring : start_time;
+	}
+
+	if (cJSON_HasObjectItem(cmd, "end_time") ) {
+		pv = cJSON_GetObjectItem(cmd, "end_time");
+		stop_time = pv ? pv->valuestring : stop_time;
+	}
+
+#if 0 /* Segmentation fault (core dumped), when other keys in cmd */
 	if (cJSON_HasObjectItem(cmd, "start_time"))
 	{
 		start_time = cJSON_GetObjectItem(cmd, "start_time")->valuestring;
@@ -82,7 +169,7 @@ static int _ont_videcmd_rvod_query(ont_device_t *dev, cJSON *cmd, const char *uu
 	{
 		stop_time= cJSON_GetObjectItem(cmd, "end_time")->valuestring;
 	}
-
+#endif
     if (!callback->query)
     {
         return ONT_ERR_INTERNAL;

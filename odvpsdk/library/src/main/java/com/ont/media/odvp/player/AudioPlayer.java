@@ -124,7 +124,7 @@ public class AudioPlayer {
 
         ADTSResult ret = decodeADTSHeader(ADTSHeader);
 
-        mPlayerTrack.setSampBit(IEncodeDef.AUDIO_FORMAT);
+        mPlayerTrack.setSampBit(IEncodeDef.AUDIO_SAMPLE_SIZE);
         mPlayerTrack.setChannel(AudioFormat.CHANNEL_OUT_STEREO);
         mPlayerTrack.setFrequency(ret.sampleRate);
         mPlayerTrack.init();

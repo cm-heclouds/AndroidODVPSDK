@@ -1,13 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion gradle.ext.compileSdkVersion
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion gradle.ext.minSdkVersion
+        targetSdkVersion gradle.ext.targetSdkVersion
         externalNativeBuild {
             cmake {
-                arguments '-D_ONVIF=1'
+                arguments "-D_ONVIF=${gradle.ext.onvifType}"
                 abiFilters "armeabi-v7a","arm64-v8a","x86","x86_64"
             }
         }
@@ -16,6 +16,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField "int", "onvifType", "${gradle.ext.onvifType}"
         }
         debug {
             debuggable true
@@ -24,6 +25,7 @@ android {
             renderscriptOptimLevel 3
             minifyEnabled false
             zipAlignEnabled true
+            buildConfigField "int", "onvifType", "${gradle.ext.onvifType}"
         }
     }
     externalNativeBuild {
@@ -39,8 +41,7 @@ dependencies {
 
 ext {
     PUBLISH_GROUP_ID = 'com.ont.media'
-    PUBLISH_ARTIFACT_ID = 'odvp-onvif'
-    PUBLISH_VERSION = rootProject.ext.versionName
+    PUBLISH_ARTIFACT_ID = gradle.ext.odvpName
+    PUBLISH_VERSION = gradle.ext.odvpVersion
 }
-
-apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'
+apply from: new File(rootProject.projectDir, "tools/android-release-aar.gradle");

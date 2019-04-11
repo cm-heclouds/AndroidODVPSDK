@@ -122,12 +122,6 @@ static void DecodeTEA (AVal * key, AVal * text);
 static int HTTP_Post (RTMP * r, RTMPTCmd cmd, const char *buf, int len);
 static int HTTP_read (RTMP * r, int fill);
 
-#ifndef _WIN32
-#if 0 /* not used yet, to wipe off warning of compiler */
-static int clk_tck;
-#endif
-#endif
-
 #ifdef CRYPTO
 #include "handshake.h"
 #endif

@@ -15,13 +15,21 @@
 #include "platform.h"
 #include "port_sock.h"
 
-int ont_platform_udp_create(ont_socket_t **sock)
+extern char * cfg_get_ont_server_ip(void);
+extern uint16_t cfg_get_ont_server_port(void);
+
+/*int ont_platform_udp_create(ont_socket_t **sock)
 {
     ont_socket_t *_sock;
     _sock = (ont_socket_t*)ont_platform_malloc(sizeof(ont_socket_t));
+#ifdef _TEST_BOOT_SERVER_ADDR_IN_CONF
+    _sock->port = cfg_get_ont_server_port();
+    sprintf(_sock->ip, "%s", cfg_get_ont_server_ip());
+#else
     _sock->port = ONT_SERVER_PORT;
     sprintf(_sock->ip, "%s", ONT_SERVER_ADDRESS);
-	
+#endif
+
     if ((_sock->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         ont_platform_free(_sock);
@@ -43,6 +51,32 @@ int ont_platform_udp_create(ont_socket_t **sock)
 	setsockopt(_sock->fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
     *sock = _sock;
+
+    return ONT_ERR_OK;
+}*/
+
+int ont_platform_udp_create_fd(ont_socket_t *sock)
+{
+    struct timeval timeout={3,0};
+    int flag = 1;
+    struct sockaddr_in addr;
+
+    if ((sock->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    {
+        return ONT_ERR_SOCKET_OP_FAIL;
+    }
+
+    memset(&addr, 0, sizeof(struct sockaddr_in));
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+    addr.sin_addr.s_addr = 0;
+    if (bind(sock->fd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
+    {
+        return ONT_ERR_SOCKET_OP_FAIL;
+    }
+    setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(int));
+    setsockopt(sock->fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+
 
     return ONT_ERR_OK;
 }
@@ -115,6 +149,17 @@ int ont_platform_udp_close(ont_socket_t *sock)
     }
     close(sock->fd);
     ont_platform_free(sock);
+
+    return ONT_ERR_OK;
+}
+
+int ont_platform_udp_close_fd(ont_socket_t *sock)
+{
+    if ( !sock)
+    {
+        return ONT_ERR_BADPARAM;
+    }
+    close(sock->fd);
 
     return ONT_ERR_OK;
 }

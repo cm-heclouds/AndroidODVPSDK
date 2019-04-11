@@ -24,7 +24,7 @@ public class AudioDecode {
     // config
     private int mSampleRate = IEncodeDef.AUDIO_SAMPLE_RATE;
     private int mChannelCount = IEncodeDef.AUDIO_CHANNEL_COUNT;
-    private int mFormat = IEncodeDef.AUDIO_FORMAT;
+    private int mFormat = IEncodeDef.AUDIO_SAMPLE_SIZE;
     private int mBitrate = IEncodeDef.AUDIO_BITRATE;
     private int mKeyProfile = IEncodeDef.AUDIO_KEY_PROFILE;
 

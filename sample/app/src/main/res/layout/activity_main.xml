@@ -53,6 +53,51 @@
             android:background="@drawable/edit_text_background"/>
     </FrameLayout>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="12dp">
+
+        <TextView
+            android:layout_width="77dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textSize="13sp"
+            android:textColor="@color/colorText0"
+            android:text="@string/server_ip" />
+
+        <EditText
+            android:id="@+id/server_ip"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingLeft="98dp"
+            android:textSize="13dp"
+            android:background="@drawable/edit_text_background" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="12dp">
+
+        <TextView
+            android:layout_width="77dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textSize="13sp"
+            android:textColor="@color/colorText0"
+            android:text="@string/server_port" />
+
+        <EditText
+            android:id="@+id/server_port"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingLeft="98dp"
+            android:textSize="13dp"
+            android:background="@drawable/edit_text_background" />
+    </FrameLayout>
     <TextView
         android:id="@+id/text_push"
         android:layout_width="317dp"

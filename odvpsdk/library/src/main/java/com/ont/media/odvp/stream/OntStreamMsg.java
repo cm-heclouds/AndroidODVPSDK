@@ -6,6 +6,7 @@ package com.ont.media.odvp.stream;
 
 public class OntStreamMsg {
 
+    public static final byte ON_UPDATE_CONFIG = 0x03;
     public static final byte ON_SEND_METADATA = 0x04;
     public static final byte ON_SEND_VIDEO = 0x05;
     public static final byte ON_SEND_AUDIO = 0x06;

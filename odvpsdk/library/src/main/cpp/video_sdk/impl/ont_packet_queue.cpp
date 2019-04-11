@@ -134,10 +134,6 @@ int RTMPLivePackEnqueue(ont_onvif_playctx *playctx, unsigned char* pFrameBuf, in
         unsigned int deltaTs, int codecType, void *data, RTMPVideoAudioCtl *ctl)
 {
      RTMPPackData  *pkdata = NULL;
-    #if 0 /* unused variables */
-    RTMPPackData  *pkdataHead = NULL;
-    ont_list_node_t *node = NULL;
-    #endif
     ont_list_t *plist = NULL;
 
     if (!playctx || !playctx->packDataList) {

@@ -7,6 +7,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import com.ont.media.odvp.model.PublishConfig;
 import com.ont.media.odvp.record.Mp4Record;
 import com.ont.media.odvp.stream.OntStreamPusher;
 import com.ont.media.odvp.utils.OntLog;
@@ -14,8 +15,11 @@ import com.ont.media.odvp.OntFormat;
 import com.ont.media.odvp.def.IEncodeDef;
 
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 //import com.tencent.mars.xlog.Log;
@@ -29,14 +33,11 @@ public class VideoEncode {
     private static final String TAG = VideoEncode.class.getSimpleName();
     public static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
 
-    private int mWidth;
-    private int mHeight;
-    private int mBitrate = IEncodeDef.VIDEO_BITRATE;
-    private int mIFrameInterval = IEncodeDef.VIDEO_IFRAME_INTERVAL;
-    private int mFrameRate = IEncodeDef.VIDEO_FRAME_RATE;
+    // config
+    private byte[] mSpspps;
+    private PublishConfig mPublishConfig;
 
     // encode
-    private int mColorFormat;
     private MediaCodec mEncoder;
     private MediaCodecInfo mEncoderInfo;
     private MediaCodec.BufferInfo mBufferInfo;
@@ -52,57 +53,92 @@ public class VideoEncode {
         mOntStreamPusher = ontStreamPusher;
         mMp4Record = mp4Record;
         mReserveBuffers = new HashMap<Long, Object>();
-        mColorFormat = chooseVideoEncoder();
     }
 
-    public void setWidth(int width) {
+    public void setPublishConfig(PublishConfig publishConfig) {
 
-        this.mWidth = width;
+        if (mPublishConfig == null) {
+
+            mPublishConfig = publishConfig.clone();
+        } else {
+
+            mPublishConfig.copy(publishConfig);
+        }
     }
 
-    public void setHeight(int height) {
+    public int chooseColorFormat(String name) {
+        // choose the encoder "video/avc":
+        //      1. select default one when type matched.
+        //      2. google avc is unusable.
+        //      3. choose qcom avc.
+        mEncoderInfo = chooseVideoEncoder(name);
+        //vmci = chooseVideoEncoder("google");
+        //vmci = chooseVideoEncoder("qcom");
 
-        this.mHeight = height;
-    }
+        int matchedColorFormat = 0;
+        MediaCodecInfo.CodecCapabilities cc = mEncoderInfo.getCapabilitiesForType(MIME_TYPE);
+        for (int i = 0; i < cc.colorFormats.length; i++) {
+            int cf = cc.colorFormats[i];
+            Log.i(TAG, String.format("vencoder %s supports color fomart 0x%x(%d)", mEncoderInfo.getName(), cf, cf));
 
-    public void setBitrate(int bitrate) {
+            // choose YUV for h.264, prefer the bigger one.
+            // corresponding to the color space transform in onPreviewFrame
+            if (cf >= cc.COLOR_FormatYUV420Planar && cf <= cc.COLOR_FormatYUV420SemiPlanar) {
+                if (cf > matchedColorFormat) {
+                    matchedColorFormat = cf;
+                }
+            }
+        }
 
-        this.mBitrate = bitrate;
-    }
+        for (int i = 0; i < cc.profileLevels.length; i++) {
+            MediaCodecInfo.CodecProfileLevel pl = cc.profileLevels[i];
+            Log.i(TAG, String.format("vencoder %s support profile %d, level %d", mEncoderInfo.getName(), pl.profile, pl.level));
+        }
 
-    public void setIFrameInterval(int iFrameInterval) {
-
-        this.mIFrameInterval = iFrameInterval;
-    }
-
-    public void setFrameRate(int frameRate) {
-
-        this.mFrameRate = frameRate;
-    }
-
-    public void setColorFormat(int colorFormat) {
-
-        this.mColorFormat = colorFormat;
+        Log.i(TAG, String.format("vencoder %s choose color format 0x%x(%d)", mEncoderInfo.getName(), matchedColorFormat, matchedColorFormat));
+        return matchedColorFormat;
     }
 
     public boolean init() {
 
-        OntFormat.setEncoderResolution(mWidth, mHeight);
-
-        MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
-        format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, mIFrameInterval);
-
         try {
+
             mEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
         } catch (Exception ie) {
+
             return false;
         }
-        mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mMp4Track = mMp4Record.addTrack(format);
+
+        OntFormat.setEncoderResolution(mPublishConfig.getWidth(), mPublishConfig.getHeight());
+        try {
+
+            MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mPublishConfig.getWidth(), mPublishConfig.getHeight());
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mPublishConfig.getVideoColorFormat());
+            format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
+            format.setInteger(MediaFormat.KEY_BIT_RATE, mPublishConfig.getVideoBitrate());
+            format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, mPublishConfig.getVideoFrameRate());
+            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, mPublishConfig.getVideoFrameInterval());
+            mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            mMp4Track = mMp4Record.addTrack(format);
+        } catch (MediaCodec.CodecException e) {
+
+            try {
+
+                MediaFormat format1 = MediaFormat.createVideoFormat(MIME_TYPE, mPublishConfig.getWidth(), mPublishConfig.getHeight());
+                format1.setInteger(MediaFormat.KEY_COLOR_FORMAT, mPublishConfig.getVideoColorFormat());
+                format1.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
+                format1.setInteger(MediaFormat.KEY_BIT_RATE, mPublishConfig.getVideoBitrate());
+                format1.setInteger(MediaFormat.KEY_FRAME_RATE, mPublishConfig.getVideoFrameRate());
+                format1.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, mPublishConfig.getVideoFrameInterval());
+                mEncoder.configure(format1, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+                mMp4Track = mMp4Record.addTrack(format1);
+            } catch (Exception e1) {
+
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -127,16 +163,17 @@ public class VideoEncode {
         }
 
         mBufferInfo = null;
+        mSpspps = null;
         mReserveBuffers.clear();
     }
 
     public void onGetRGBAFrame(byte[] rgbaFrame, int width, int height, long startTimeUs) {
 
         byte[] yuvFrame;
-        if (mColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+        if (mPublishConfig.getVideoColorFormat() == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
 
             yuvFrame = OntFormat.RGBAToI420(rgbaFrame, width, height, true, 180);
-        } else if (mColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+        } else if (mPublishConfig.getVideoColorFormat() == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
 
             yuvFrame = OntFormat.RGBAToNV12(rgbaFrame, width, height, true, 180);
         } else {
@@ -149,7 +186,7 @@ public class VideoEncode {
 
     public void onGetI420Frame(byte[] yuvFrame, int length, long startTimeUs) {
 
-        if (mColorFormat != MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+        if (mPublishConfig.getVideoColorFormat() != MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
 
             return;
         }
@@ -159,12 +196,38 @@ public class VideoEncode {
 
     public void onGetNV12Frame(byte[] yuvFrame, int length, long startTimeUs) {
 
-        if (mColorFormat != MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+        if (mPublishConfig.getVideoColorFormat() != MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
 
             return;
         }
 
         onGetFrame(yuvFrame, length, startTimeUs);
+    }
+
+    public void onGetNV21Frame(byte[] nv21Frame, boolean flip, int rotation, int width, int height, long startTimeUs) {
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+
+        String date;
+        if(mPublishConfig.isWaterMark()){
+            date = format.format(new Date());
+        }else{
+            date = null;
+        }
+
+        byte[] yuvFrame;
+        if (mPublishConfig.getVideoColorFormat() == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+
+            yuvFrame = OntFormat.NV21ToI420(nv21Frame, date, width, height, flip, rotation);
+        } else if (mPublishConfig.getVideoColorFormat() == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+
+            yuvFrame = OntFormat.NV21ToNV12(nv21Frame, date, width, height, flip, rotation);
+        } else {
+
+            return;
+        }
+
+        onGetFrame(yuvFrame, yuvFrame.length, startTimeUs);
     }
 
     private void onGetFrame(byte[] yuvFrame, int length, long startTimeUs) {
@@ -204,13 +267,31 @@ public class VideoEncode {
 
                 outputBuffer.position(mBufferInfo.offset);
                 outputBuffer.limit(mBufferInfo.offset + mBufferInfo.size);
-                long presentationTimeInMillis = mBufferInfo.presentationTimeUs / 1000L;
-                byte[] data = getBuffer(mBufferInfo.size, mOntStreamPusher.getLastSendVideoFrameTimestamp(), presentationTimeInMillis);
-                outputBuffer.get(data, 0, mBufferInfo.size);
-                outputBuffer.position(mBufferInfo.offset);
 
-                mOntStreamPusher.addVideoFrame(data, mBufferInfo.size, presentationTimeInMillis);
-                mEncoder.releaseOutputBuffer(outputBufferIndex, false);
+                long presentationTimeInMillis = mBufferInfo.presentationTimeUs / 1000L;
+                if (presentationTimeInMillis == 0) {
+
+                    // spspps
+                    mSpspps = null;
+                    mSpspps = new byte[mBufferInfo.size];
+                    outputBuffer.get(mSpspps, 0, mBufferInfo.size);
+                    outputBuffer.position(mBufferInfo.offset);
+                    mEncoder.releaseOutputBuffer(outputBufferIndex, false);
+
+                } else {
+
+                    if (mSpspps != null) {
+
+                        mOntStreamPusher.addVideoFrame(mSpspps, mSpspps.length, presentationTimeInMillis);
+                        mSpspps = null;
+                    }
+
+                    byte[] data = getBuffer(mBufferInfo.size, mOntStreamPusher.getLastSendVideoFrameTimestamp(), presentationTimeInMillis);
+                    outputBuffer.get(data, 0, mBufferInfo.size);
+                    outputBuffer.position(mBufferInfo.offset);
+                    mOntStreamPusher.addVideoFrame(data, mBufferInfo.size, presentationTimeInMillis);
+                    mEncoder.releaseOutputBuffer(outputBufferIndex, false);
+                }
             } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
 
                 outputBuffers = mEncoder.getOutputBuffers();
@@ -219,10 +300,10 @@ public class VideoEncode {
                 MediaFormat newFormat = mEncoder.getOutputFormat();
                 ByteBuffer sps = newFormat.getByteBuffer("csd-0");
                 ByteBuffer pps = newFormat.getByteBuffer("csd-1");
-                byte[] config = new byte[sps.limit() + pps.limit()];
-                sps.get(config, 0, sps.limit());
-                pps.get(config, sps.limit(), pps.limit());
-                mOntStreamPusher.addVideoFrame(config, config.length, 0);
+                mSpspps = null;
+                mSpspps = new byte[sps.limit() + pps.limit()];
+                sps.get(mSpspps, 0, sps.limit());
+                pps.get(mSpspps, sps.limit(), pps.limit());
             } else {
 
                 break;
@@ -288,38 +369,5 @@ public class VideoEncode {
         }
 
         return null;
-    }
-
-    private int chooseVideoEncoder() {
-        // choose the encoder "video/avc":
-        //      1. select default one when type matched.
-        //      2. google avc is unusable.
-        //      3. choose qcom avc.
-        mEncoderInfo = chooseVideoEncoder(null);
-        //vmci = chooseVideoEncoder("google");
-        //vmci = chooseVideoEncoder("qcom");
-
-        int matchedColorFormat = 0;
-        MediaCodecInfo.CodecCapabilities cc = mEncoderInfo.getCapabilitiesForType(MIME_TYPE);
-        for (int i = 0; i < cc.colorFormats.length; i++) {
-            int cf = cc.colorFormats[i];
-            Log.i(TAG, String.format("vencoder %s supports color fomart 0x%x(%d)", mEncoderInfo.getName(), cf, cf));
-
-            // choose YUV for h.264, prefer the bigger one.
-            // corresponding to the color space transform in onPreviewFrame
-            if (cf >= cc.COLOR_FormatYUV420Planar && cf <= cc.COLOR_FormatYUV420SemiPlanar) {
-                if (cf > matchedColorFormat) {
-                    matchedColorFormat = cf;
-                }
-            }
-        }
-
-        for (int i = 0; i < cc.profileLevels.length; i++) {
-            MediaCodecInfo.CodecProfileLevel pl = cc.profileLevels[i];
-            Log.i(TAG, String.format("vencoder %s support profile %d, level %d", mEncoderInfo.getName(), pl.profile, pl.level));
-        }
-
-        Log.i(TAG, String.format("vencoder %s choose color format 0x%x(%d)", mEncoderInfo.getName(), matchedColorFormat, matchedColorFormat));
-        return matchedColorFormat;
     }
 }

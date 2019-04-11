@@ -2,6 +2,9 @@ package com.ont.media.odvp.stream;
 
 import com.ont.media.odvp.IOntSoundCb;
 import com.ont.media.odvp.OntRtmp;
+import com.ont.media.odvp.def.IEncodeDef;
+import com.ont.media.odvp.model.MetaDataObject;
+import com.ont.media.odvp.model.PublishConfig;
 import com.ont.media.odvp.model.Resolution;
 import com.ont.media.odvp.model.RtmpMetaData;
 import com.ont.media.odvp.player.AudioPlayer;
@@ -25,12 +28,7 @@ public class OntStream {
     private long mLastSendVideoFrameTimestamp;
     private long mLastSendAudioFrameTimestamp;
 
-    private boolean mAudio = true;
-    private int mWidth;
-    private int mHeight;
-    private int mSampleRate = 3;
-    private int mFormat = 1;
-    private int mChannelConfig = 1;
+    private PublishConfig mPublishConfig;
 
     private long mRtmpPointer;
     private boolean mConfigOk;
@@ -47,36 +45,6 @@ public class OntStream {
         mLastSendFrameTimestamp = -1;
     }
 
-    public void setAudio(boolean audio) {
-
-        this.mAudio = audio;
-    }
-
-    public void setWidth(int width) {
-
-        this.mWidth = width;
-    }
-
-    public void setHeight(int height) {
-
-        this.mHeight = height;
-    }
-
-    public void setSampleRate(int sampleRate) {
-
-        this.mSampleRate = sampleRate;
-    }
-
-    public void setFormat(int format) {
-
-        this.mFormat = format;
-    }
-
-    public void setChannelConfig(int channelConfig) {
-
-        this.mChannelConfig = channelConfig;
-    }
-
     public long getRtmpPointer() {
         return mRtmpPointer;
     }
@@ -89,31 +57,9 @@ public class OntStream {
 
             return false;
         }
-        RtmpMetaData metaData = new RtmpMetaData();
-        metaData.setDuration(0.0);
-        metaData.setWidth(mWidth);
-        metaData.setHeight(mHeight);
-        metaData.setVideoCodecid(7);
-        metaData.setAudioCodecid(10);
-        metaData.setHasAudio(true);
-        if (OntRtmp.nativeSendMetadata(mRtmpPointer, metaData) != 0) {
-
-            OntRtmp.nativeCloseStream(mRtmpPointer);
-            mRtmpPointer = 0;
-            return false;
-        }
 
         OntRtmp.nativeSetSoundNotify(mRtmpPointer, new WeakReference<IOntSoundCb>(mSoundCallback));
-
-        /*
-         *  format = 10 AAC
-         *  sampleRate = 3 44KH
-         *  sampleSize = 1 16bit
-         *  sampleType = 0 mono
-         */
-        mAudioHeaderTag = OntRtmp.nativeMakeAudioHeaderTag(10, mSampleRate, mFormat, mChannelConfig);
         mIsConnect = true;
-
         return true;
     }
 
@@ -125,15 +71,30 @@ public class OntStream {
         disconnect();
     }
 
-    public boolean sendMetadata(int width, int height) {
+    public boolean sendMetadata() {
+
+        mConfigOk = false;
+        if (!mPublishConfig.isEnableAudio()) {
+
+            // 单独发一帧音频参数帧，兼容IOS H5 video标签的播放
+            byte[] audioTempData = new byte[2];
+            audioTempData[0] = 0x12;
+            audioTempData[1] = 0x10;
+            if (OntRtmp.sendAudioData(mRtmpPointer, mAudioHeaderTag, audioTempData, 2, 0, true) < 0) {
+
+                OntRtmp.nativeCloseStream(mRtmpPointer);
+                mRtmpPointer = 0;
+                return false;
+            }
+        }
 
         RtmpMetaData metaData = new RtmpMetaData();
         metaData.setDuration(0.0);
-        metaData.setWidth(width);
-        metaData.setHeight(height);
+        metaData.setWidth(mPublishConfig.getWidth());
+        metaData.setHeight(mPublishConfig.getHeight());
         metaData.setVideoCodecid(7);
         metaData.setAudioCodecid(10);
-        metaData.setHasAudio(true);
+        metaData.setHasAudio(mPublishConfig.isEnableAudio());
         if (OntRtmp.nativeSendMetadata(mRtmpPointer, metaData) != 0) {
 
             return false;
@@ -162,7 +123,7 @@ public class OntStream {
         return mLastSendAudioFrameTimestamp;
     }
 
-    public boolean onMediaMuxerMsg(OntStreamMsg msg) {
+    public boolean onStreamMsg(OntStreamMsg msg) {
 
         if (msg == null || !mIsConnect) {
 
@@ -173,6 +134,25 @@ public class OntStream {
         boolean sendSuccess = true;
         switch (msg.what) {
 
+            case OntStreamMsg.ON_UPDATE_CONFIG:
+
+                PublishConfig publishConfig = (PublishConfig) msg.obj;
+                if (mPublishConfig == null) {
+
+                    mPublishConfig = publishConfig.clone();
+                } else {
+
+                    mPublishConfig.copy(publishConfig);
+                }
+
+                /*
+                 *  format = 10 AAC
+                 *  sampleRate = 3 44KH
+                 *  sampleSize = 1 16bit
+                 *  sampleType = 0 mono
+                 */
+                mAudioHeaderTag = OntRtmp.nativeMakeAudioHeaderTag(10, mPublishConfig.sampleRate2Num(), mPublishConfig.sampleSize2Num(), mPublishConfig.channelConfig2Num());
+                break;
             case OntStreamMsg.ON_SEND_METADATA:
 
                 mLastSendFrameTimestamp = -1;
@@ -180,8 +160,7 @@ public class OntStream {
                 mLastSendAudioFrameTimestamp = 0;
                 mVideoFrameList.clear();
                 mAudioFrameList.clear();
-                Resolution resolution = (Resolution) msg.obj;
-                if (!sendMetadata(resolution.width, resolution.height)) {
+                if (!sendMetadata()) {
 
                     sendSuccess = false;
                 }
@@ -249,7 +228,7 @@ public class OntStream {
         // we do not know the audio or video frames timestamp in advance and they are not
         // deterministic. So we send video frames with the timestamp is less than the first one in the list
         // and the same algorithm applies for audio frames.
-        if (!mAudio) {
+        if (!mPublishConfig.isEnableAudio()) {
 
             int videoFrameListSize = mVideoFrameList.size();
             if (!sendVideoFrames(mVideoFrameList.get(videoFrameListSize - 1).timestamp)) {

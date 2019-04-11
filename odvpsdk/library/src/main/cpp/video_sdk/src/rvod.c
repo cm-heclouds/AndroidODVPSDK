@@ -115,10 +115,6 @@ int rtmp_rvod_start(t_rtmp_vod_ctx* ctx,  const char *pushurl, int timeout)
     
     /*set the notificaiton function*/
     rtmp->pause_notify = rtmp_rvod_pause_notify;
-
-#if 0 /* type cast to wipe off warning of compiler */
-    rtmp->seek_notify = rtmp_rvod_seek_notify;
-#endif
     rtmp->seek_notify = (rtmp_seek_notify)rtmp_rvod_seek_notify;
     
     rtmp->stop_notify = rtmp_rvod_stop_notify;

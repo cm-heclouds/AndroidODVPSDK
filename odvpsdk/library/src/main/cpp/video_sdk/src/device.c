@@ -14,7 +14,7 @@
 #define BUFSIZE 78
 #define IPSIZE 40
 
-int ont_device_get_acc(ont_device_t *dev, char *token)
+/*int ont_device_get_acc(ont_device_t *dev, char *token)
 {
     int i, ret, index = 0;
     unsigned int bytes_sent = 0;
@@ -72,18 +72,85 @@ int ont_device_get_acc(ont_device_t *dev, char *token)
     }
     ont_platform_udp_close(sock);
     return ONT_ERR_OK;
-}   
+}*/
+
+int ont_device_get_acc_by_udp_addr(ont_device_t *dev, ont_socket_t *udp_addr, char *token)
+{
+	int i, ret, index = 0;
+	unsigned int bytes_sent = 0;
+	unsigned int bytes_read = 0;
+	char buf[BUFSIZE];
+	ont_socket_t *sock;
+
+	if (!dev || !udp_addr || !token) {
+		return ONT_ERR_BADPARAM;
+	}
+
+	sock = udp_addr;
+	ret = ont_platform_udp_create_fd(sock);
+	if (ret != 0)
+	{
+		return ONT_ERR_SOCKET_OP_FAIL;
+	}
+
+	int32_t version = 0x6F6E6576;
+	char carrier[4] = "";
+	ont_encodeInt32(buf, version);
+	index += 4;
+	ont_encodeInt64(buf + index, dev->product_id);
+	index += 8;
+	ont_encodeInt64(buf + index, dev->device_id);
+	index += 8;
+	memcpy(buf + index, carrier, 4);
+
+	ret = ont_platform_udp_send(sock, buf, 24, &bytes_sent);
+	if (ret)
+	{
+		ont_platform_udp_close_fd(sock);
+		return ONT_ERR_SOCKET_OP_FAIL;
+	}
+
+	memset(buf, 0, BUFSIZE);
+
+
+	ret = ont_platform_udp_recv(sock, buf, BUFSIZE, &bytes_read);
+	if (ret)
+	{
+		ont_platform_udp_close_fd(sock);
+		return ONT_ERR_SOCKET_OP_FAIL;
+	}
+
+	for (i = 0; i < 32; i++)
+	{
+		token[i] = buf[i+4];
+	}
+	dev->port = ont_decodeInt16(buf+36);
+	i = 0;
+	while(1)
+	{
+		dev->acc_ip[i] = buf[i+ 38];
+		if (!buf[i + 38])
+		{
+			break;
+		}
+		i++;
+	}
+	ont_platform_udp_close_fd(sock);
+	return ONT_ERR_OK;
+}
 
 int ont_device_create(ont_device_t **dev, ont_device_callback_t *cbs)
 {
 	ont_device_t *_dev;
-	if (*dev || !cbs)
+	if (!dev || !cbs)
 	{
+		*dev = NULL;
 		return ONT_ERR_BADPARAM;
 	}
 	_dev = ont_platform_malloc(sizeof(ont_device_t));
 	if (!_dev)
 	{
+		*dev = NULL;
 		return ONT_ERR_NOMEM;
 	}
 	memset(_dev, 0x00, sizeof(ont_device_t));
@@ -93,6 +160,7 @@ int ont_device_create(ont_device_t **dev, ont_device_callback_t *cbs)
 	if (!_dev->rcv_buf)
 	{
 		ont_platform_free(_dev);
+		*dev = NULL;
 		return ONT_ERR_NOMEM;
 	}
 	_dev->buf_length = ONT_PROTOCOL_DEFAULT_SIZE;
@@ -102,6 +170,7 @@ int ont_device_create(ont_device_t **dev, ont_device_callback_t *cbs)
 	{
 		ont_platform_free(_dev->rcv_buf);
 		ont_platform_free(_dev);
+		*dev = NULL;
 		return ONT_ERR_NOMEM;
 	}
 		
@@ -266,11 +335,7 @@ void ont_device_destroy(ont_device_t *dev)
 	}
 
     /* free memory on socket manually */
-    if (dev->fd) 
-    {
-        ont_device_disconnect(dev);
-    }
-
+	ont_device_disconnect(dev);
 	ont_platform_free(dev);
 }
 
@@ -353,7 +418,7 @@ int ont_device_del_channel(ont_device_t *dev, uint32_t channel)
 		else
 		{
 			RTMP_Log(RTMP_LOGERROR, "del channel ret is %d", resp);
-			return ret;
+			return resp;
 		}
 	}
 
@@ -505,6 +570,7 @@ int ont_device_deal_api_defined_msg(ont_device_t *dev, char *msg, size_t msg_len
 
 int ont_device_deal_plat_resp_push_stream_msg(ont_device_t *dev, ont_plat_resp_dev_ps_t *resp)
 {
+	int ret = 0;
 	if (NULL == resp || NULL == dev)
 	{
 		return ONT_ERR_BADPARAM;
@@ -522,9 +588,9 @@ int ont_device_deal_plat_resp_push_stream_msg(ont_device_t *dev, ont_plat_resp_d
 		   (resp->protype == 0) ? "RTMP" : "else-protocol",
 		   resp->chan_id);
 
-	(void)dev->device_cbs->live_start(dev, resp->chan_id, resp->protype, resp->url_ttl_min, resp->push_url);
+	ret = dev->device_cbs->live_start(dev, resp->chan_id, resp->protype, resp->url_ttl_min, resp->push_url);
 
-	return ONT_ERR_OK;
+	return ret;
 }
 
 int ont_device_data_upload(ont_device_t *dev, uint64_t dataid, const char*data, size_t len)
@@ -563,7 +629,7 @@ int ont_device_upload_preview_picture
 {
     t_message_pre_picture pic;
 
-    /* 子函数内有判参 */
+    /* 锟接猴拷锟斤拷锟斤拷锟斤拷锟叫诧拷 */
 
     memset(&pic, 0x00, sizeof(t_message_pre_picture));
     pic.chnid = chnid;
@@ -593,12 +659,6 @@ int ont_device_get_systime(ont_device_t *dev, struct ont_timeval *tm)
         tm->tv_sec=ont_decodeInt64(resp);
         tm->tv_usec=ont_decodeInt32(resp+8);
 	}
-#if 0 /* to wipe off warning of compiler by using final return statement */
-    else
-    {
-        return ret;
-    }
-#endif
     return ret;
 }
 
@@ -629,17 +689,17 @@ int ont_device_req_push_stream
 	uint8_t result = 0;
 	char	*data = NULL;
 	size_t	data_len = 0;
-	char    resp[533] = { 0 }; /* 目前设备为推流地址设定的存储空间为512字节，在平台回复中，除推流地址外共11个字节，预留10字节 */
+	char    resp[533] = { 0 }; /* length(url)=512, header else */
 	size_t  resp_len = 0;
 	ont_plat_resp_dev_ps_t resp_s = { 0 };
-	
-	/* 推流空闲时间最大为600s */
+
+	/* idle_sec max = 600s */
 	if (NULL == dev || NULL == presp || 600 < idle_sec)
 	{
 		return ONT_ERR_BADPARAM;
 	}
 
-	/* 设备请求推流信息占6个字节 */
+	/* length of response messge */
 	data_len = 6;
 	data = ont_platform_malloc(data_len);
 	if (NULL == data)
@@ -696,7 +756,7 @@ int ont_device_req_push_stream
 			memcpy(presp, &resp_s, sizeof(ont_plat_resp_dev_ps_t));
 			
 			/* to deal the response of platform */
-			(void)dev->device_cbs->plt_resp_dev_req_stream_msg(dev, &resp_s);
+			ret = dev->device_cbs->plt_resp_dev_req_stream_msg(dev, &resp_s);
 		}
 	}
 
@@ -733,7 +793,6 @@ static int ont_device_get_random_number_inlow2up(int up, int low)
 	 *     |________|________|________|
 	 *
 	 * overflow: up in [0, INT_MIN] - low in [-INT_MIN, 0] into [INT_MAX, UINT_MAX]
-	 * avoid warning of compiler by using type cast '(unsigned int)'
 	 */
 	num = (unsigned int)up - (unsigned int)low + 1u;
 	if (num > (unsigned int)RAND_MAX) {

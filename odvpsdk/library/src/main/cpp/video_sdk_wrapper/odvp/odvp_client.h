@@ -21,7 +21,17 @@ ont_device_t * device_create(ont_device_callback_t *cbs, void * cbs_weak_this);
  * @param device_id
  * @return
  */
-int device_connect(ont_device_t * dev, uint64_t device_id);
+//int device_connect(ont_device_t * dev, uint64_t device_id);
+
+/**
+ *
+ * @param product_id
+ * @param device_id
+ * @param ip
+ * @param port
+ * @return
+ */
+int device_connect_by_addr(ont_device_t * dev, uint64_t device_id, char* ip, uint64_t port);
 
 void device_destroy(ont_device_t * dev);
 

@@ -173,7 +173,7 @@ struct _ont_device_callback_t
  * @param token 接入机token, 与视频接入机建立连接�?需要调用消息验证这个token
  * @remark UDP 消息
  */
-int ont_device_get_acc(ont_device_t *dev, char *token);
+//int ont_device_get_acc(ont_device_t *dev, char *token);
 
 
 /**
@@ -407,7 +407,13 @@ extern int ont_device_req_push_stream
  * @remark: actually, the random number belongs to [low, low + min(up, RAND_MAX - 1)];
  *			this function edit for 2's complement machine
  */
-extern int ont_device_restart_random_delay(int up, int low);
+extern int
+ont_device_restart_random_delay(int up, int low);
+
+/* 閫氳繃鍙傛暟udp_addr鎸囧畾udp鍦板潃,
+ * 鍏朵綑鍚宱nt_device_get_acc */
+extern int
+ont_device_get_acc_by_udp_addr(ont_device_t *dev, ont_socket_t *udp_addr, char *token);
 
 #ifdef __cplusplus
 } /* extern "C" */

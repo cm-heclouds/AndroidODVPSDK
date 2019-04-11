@@ -3,14 +3,15 @@ package com.ont.media.odvp.stream;
 import android.os.Handler;
 
 import com.ont.media.odvp.OntRtmp;
+import com.ont.media.odvp.model.MetaDataObject;
+import com.ont.media.odvp.model.PublishConfig;
 import com.ont.media.odvp.utils.OntLog;
 import com.ont.media.odvp.def.IStreamDef;
-import com.ont.media.odvp.model.Resolution;
 import com.ont.media.odvp.player.AudioPlayer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
-//import com.tencent.mars.xlog.Log;
 
 /**
  * Created by betali on 2018/1/15.
@@ -30,12 +31,14 @@ public class OntStreamPusher {
     private long mLastVideoTimestamp;
     private long mLastAudioTimestamp;
     private Handler mMainThreadHandler;
+    private AtomicInteger mVideoMsgCacheNumber;
 
     public OntStreamPusher(Handler handler, AudioPlayer audioPlayer) {
 
         mPushThreadNotifyLock = new Object();
         mMediaMuxerMsgCache = new ConcurrentLinkedQueue<>();
         mOntStream = new OntStream(audioPlayer);
+        mVideoMsgCacheNumber = new AtomicInteger(0);
 
         mLastVideoTimestamp = -1;
         mLastAudioTimestamp = -1;
@@ -43,34 +46,20 @@ public class OntStreamPusher {
         mMainThreadHandler = handler;
     }
 
-    public void setAudio(boolean audio) {
+    public AtomicInteger getVideoMsgCacheNumber() {
 
-        mOntStream.setAudio(audio);
+        return mVideoMsgCacheNumber;
     }
 
-    public void setWidth(int width) {
+    public void setPublishConfig(PublishConfig publishConfig) {
 
-        mOntStream.setWidth(width);
-    }
-
-    public void setHeight(int height) {
-
-        mOntStream.setHeight(height);
-    }
-
-    public void setSampleRate(int sampleRate) {
-
-        mOntStream.setSampleRate(sampleRate);
-    }
-
-    public void setFormat(int format) {
-
-        mOntStream.setFormat(format);
-    }
-
-    public void setChannelConfig(int channelConfig) {
-
-        mOntStream.setChannelConfig(channelConfig);
+        if (!mRunning) {
+            return;
+        }
+        mLastVideoTimestamp = -1;
+        mLastAudioTimestamp = -1;
+        mMediaMuxerMsgCache.clear();
+        addMediaMuxerMsg(new OntStreamMsg(OntStreamMsg.ON_UPDATE_CONFIG, publishConfig));
     }
 
     public boolean start(final String pushUrl, final String deviceId) {
@@ -100,7 +89,13 @@ public class OntStreamPusher {
                     while (!mMediaMuxerMsgCache.isEmpty()) {
 
                         // 数据发送
-                        if (!mOntStream.onMediaMuxerMsg(mMediaMuxerMsgCache.poll())) {
+                        OntStreamMsg msg = mMediaMuxerMsgCache.poll();
+                        if (msg.what == OntStreamMsg.ON_SEND_VIDEO) {
+
+                            mVideoMsgCacheNumber.decrementAndGet();
+                        }
+
+                        if (!mOntStream.onStreamMsg(msg)) {
 
                             // 数据发送失败
                             if (!mDisconnectNotify) {
@@ -137,6 +132,7 @@ public class OntStreamPusher {
 
         mRunning = false;
         mMediaMuxerMsgCache.clear();
+        mVideoMsgCacheNumber.set(0);
 
         if (mPushThread != null) {
 
@@ -158,17 +154,13 @@ public class OntStreamPusher {
         mOntStream.release(false);
     }
 
-    public void sendMetadata(int width, int height) {
+    public void sendMetadata() {
 
         if (!mRunning) {
 
             return;
         }
-
-        mLastVideoTimestamp = -1;
-        mLastAudioTimestamp = -1;
-        mMediaMuxerMsgCache.clear();
-        addMediaMuxerMsg(new OntStreamMsg(OntStreamMsg.ON_SEND_METADATA, new Resolution(width, height)));
+        addMediaMuxerMsg(new OntStreamMsg(OntStreamMsg.ON_SEND_METADATA, null));
     }
 
     public void addVideoFrame(byte[] data, int length, long presentationTime) {
@@ -184,6 +176,7 @@ public class OntStreamPusher {
             return;
         }
 
+        mVideoMsgCacheNumber.incrementAndGet();
         mLastVideoTimestamp = presentationTime;
         addMediaMuxerMsg(new OntStreamMsg(OntStreamMsg.ON_SEND_VIDEO, new MediaFrame(data, length, presentationTime)));
     }

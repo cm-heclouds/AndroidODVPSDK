@@ -26,7 +26,7 @@ typedef struct _t_dev_record_status
 }t_dev_record_ctx;
 
 
-int ont_record_channel_cmd_update(void *dev, int32_t channel, int32_t status, int32_t seconds, char url[255]);
+int32_t ont_record_channel_cmd_update(void *dev, int32_t channel, int32_t status, int32_t seconds, char url[255]);
 int ont_record_check(void *dev, int32_t channel, ont_onvif_playctx *onvif_ctx);
 
 t_dev_record_ctx* ont_record_start(void *dev, int32_t channel, void *onvif_ctx);

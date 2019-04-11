@@ -5,6 +5,7 @@ import android.media.AudioRecord;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 
+import com.ont.media.odvp.model.PublishConfig;
 import com.ont.media.odvp.record.Mp4Record;
 import com.ont.media.odvp.stream.OntStreamPusher;
 import com.ont.media.odvp.utils.OntLog;
@@ -28,12 +29,10 @@ public class AudioEncode {
     private static final String AUDIO_MIME_TYPE = "audio/mp4a-latm";
 
     // config
-    private MediaCodec mEncoder;
-    private int mSampleRate = IEncodeDef.AUDIO_SAMPLE_RATE;
-    private int mChannelConfig = IEncodeDef.AUDIO_CHANNEL_CONFIG;
-    private int mFormat = IEncodeDef.AUDIO_FORMAT;
-    private int mBitrate = IEncodeDef.AUDIO_BITRATE;
+    private PublishConfig mPublishConfig;
+    private byte[] mSeqData;
 
+    private MediaCodec mEncoder;
     private OntStreamPusher mOntStreamPusher;
     private Mp4Record mMp4Record;
     private MediaCodec.BufferInfo mBufferInfo;
@@ -48,32 +47,23 @@ public class AudioEncode {
         mReserveBuffers = new HashMap<Long, Object>();
     }
 
-    public void setSampleRate(int sampleRate) {
+    public void setPublishConfig(PublishConfig publishConfig) {
 
-        this.mSampleRate = sampleRate;
-    }
+        if (mPublishConfig == null) {
 
-    public void setChannelConfig(int channelConfig) {
+            mPublishConfig = publishConfig.clone();
+        } else {
 
-        this.mChannelConfig = channelConfig;
-    }
-
-    public void setFormat(int format) {
-
-        this.mFormat = format;
-    }
-
-    public void setBitrate(int bitrate) {
-
-        this.mBitrate = bitrate;
+            mPublishConfig.copy(publishConfig);
+        }
     }
 
     public boolean init() {
 
-        MediaFormat audioFormat = MediaFormat.createAudioFormat(AUDIO_MIME_TYPE, mSampleRate, mChannelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1);
+        MediaFormat audioFormat = MediaFormat.createAudioFormat(AUDIO_MIME_TYPE, mPublishConfig.getAudioSampleRate(), mPublishConfig.getAudioChannelConfig() == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1);
         //audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectHE);
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
-        audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, AudioRecord.getMinBufferSize(mSampleRate, mChannelConfig, mFormat));
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mPublishConfig.getAudioBitrate());
+        audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, AudioRecord.getMinBufferSize(mPublishConfig.getAudioSampleRate(), mPublishConfig.getAudioChannelConfig(), mPublishConfig.getAudioSampleSize()));
 
         try {
             mEncoder = MediaCodec.createEncoderByType(AUDIO_MIME_TYPE);
@@ -108,6 +98,7 @@ public class AudioEncode {
         }
 
         mBufferInfo = null;
+        mSeqData = null;
         mReserveBuffers.clear();
     }
 
@@ -151,12 +142,28 @@ public class AudioEncode {
                 outputBuffer.position(mBufferInfo.offset);
                 outputBuffer.limit(mBufferInfo.offset + mBufferInfo.size);
                 long presentationTimeInMillis = mBufferInfo.presentationTimeUs / 1000L;
-                byte[] data = getBuffer(mBufferInfo.size, mOntStreamPusher.getLastSendAudioFrameTimestamp(), presentationTimeInMillis);
-                outputBuffer.get(data, 0, mBufferInfo.size);
-                outputBuffer.position(mBufferInfo.offset);
+                if (presentationTimeInMillis == 0) {
 
-                mOntStreamPusher.addAudioFrame(data, mBufferInfo.size, presentationTimeInMillis);
-                mEncoder.releaseOutputBuffer(outputBufferIndex, false);
+                    // seq data
+                    mSeqData = null;
+                    mSeqData = new byte[mBufferInfo.size];
+                    outputBuffer.get(mSeqData, 0, mBufferInfo.size);
+                    outputBuffer.position(mBufferInfo.offset);
+                    mEncoder.releaseOutputBuffer(outputBufferIndex, false);
+                } else {
+
+                    if (mSeqData != null) {
+
+                        mOntStreamPusher.addAudioFrame(mSeqData, mSeqData.length, presentationTimeInMillis);
+                        mSeqData = null;
+                    }
+
+                    byte[] data = getBuffer(mBufferInfo.size, mOntStreamPusher.getLastSendAudioFrameTimestamp(), presentationTimeInMillis);
+                    outputBuffer.get(data, 0, mBufferInfo.size);
+                    outputBuffer.position(mBufferInfo.offset);
+                    mOntStreamPusher.addAudioFrame(data, mBufferInfo.size, presentationTimeInMillis);
+                    mEncoder.releaseOutputBuffer(outputBufferIndex, false);
+                }
             } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
 
                 outputBuffers = mEncoder.getOutputBuffers();

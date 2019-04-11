@@ -17,6 +17,7 @@ import com.ont.media.odvp.model.VideoFileInfo;
 import com.ont.media.odvp.model.VodBaseInfo;
 import com.ont.media.odvp.model.VodCmdReply;
 import com.ont.media.odvp.model.VodInfo;
+import com.ont.odvp.sample.BuildConfig;
 import com.ont.odvp.sample.def.ICallback;
 import com.ont.odvp.sample.def.ICmdListener;
 import com.ont.odvp.sample.def.ICmdExecutor;
@@ -356,7 +357,7 @@ public class CmdExecutor extends ICmdExecutor {
         }
 
         // connect to access
-        int ret = OntOdvp.nativeDeviceConnect(mDeviceReference, "0");
+        int ret = OntOdvp.nativeDeviceConnect(mDeviceReference, "0", deviceInfo.ip, deviceInfo.port);
         if (ret != 0) {
 
             OntOdvp.nativeDeviceDestroy(mDeviceReference);
@@ -426,10 +427,13 @@ public class CmdExecutor extends ICmdExecutor {
         // 添加内置摄像头通道
         OntOdvp.nativeDeviceAddChannel(mDeviceReference, 1, "num1", "内置摄像头");
 
-        // 添加onvif摄像头通道
-        String cameraConfig = getCameraConfig();
-        if(!TextUtils.isEmpty(cameraConfig)){
-            OntOnvif.nativeAddChannel(mDeviceReference, getCameraConfig());
+        if (BuildConfig.onvifType == 1) {
+
+            // 添加onvif摄像头通道
+            String cameraConfig = getCameraConfig();
+            if (!TextUtils.isEmpty(cameraConfig)) {
+                OntOnvif.addChannel(mDeviceReference, getCameraConfig());
+            }
         }
 
         mTmLast = System.currentTimeMillis();

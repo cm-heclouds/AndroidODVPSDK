@@ -119,7 +119,9 @@ public class Mp4Record {
         }
 
         mRecFile = outputFile;
-        createMovie(mRecFile);
+        if (!createMovie(mRecFile)) {
+            return false;
+        }
         mHandler.notifyRecordStarted(mRecFile.getPath());
 
         if (!spsList.isEmpty() && !ppsList.isEmpty()) {
@@ -130,7 +132,6 @@ public class Mp4Record {
         worker = new Thread(new Runnable() {
             @Override
             public void run() {
-                bRecording = true;
                 while (bRecording) {
                     // Keep at least one audio and video frame in cache to ensure monotonically increasing.
                     while (!frameCache.isEmpty()) {
@@ -150,7 +151,7 @@ public class Mp4Record {
             }
         });
         worker.start();
-
+        bRecording = true;
         return true;
     }
 
@@ -197,7 +198,6 @@ public class Mp4Record {
             finishMovie();
             mHandler.notifyRecordFinished(mRecFile.getPath());
         }
-        Log.i(TAG, "Mp4Record closed");
     }
 
     /**
@@ -775,7 +775,7 @@ public class Mp4Record {
     private volatile long flushBytes = 0;
     private HashMap<Track, long[]> track2SampleSizes = new HashMap<>();
 
-    private void createMovie(File outputFile) {
+    private boolean createMovie(File outputFile) {
         try {
             fos = new FileOutputStream(outputFile);
             fc = fos.getChannel();
@@ -788,7 +788,11 @@ public class Mp4Record {
         } catch (IOException e) {
             e.printStackTrace();
             mHandler.notifyRecordIOException(e);
+            Log.i(TAG, "Mp4Record create file catch");
+            return false;
         }
+
+        return true;
     }
 
     private void writeSampleData(ByteBuffer byteBuf, MediaCodec.BufferInfo bi, boolean isAudio) {

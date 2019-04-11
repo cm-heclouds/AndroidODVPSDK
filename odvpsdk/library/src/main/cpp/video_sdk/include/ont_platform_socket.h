@@ -9,90 +9,96 @@ extern "C" {
 
 
 /**
- * socket¾ä±ú£¬ÒÆÖ²Ê±×ÔĞĞ¶¨ÒåÆä¾ßÌåÊôĞÔ
+ * socketï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö²Ê±ï¿½ï¿½ï¿½Ğ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 typedef struct ont_socket_t ont_socket_t;
 
 
 
 /**
- * ´´½¨TCP socket¾ä±ú£¬ ±ØĞë½«ÆäÉèÖÃÎª·Ç×èÈûÄ£Ê½
- * @param  sock Ö¸Ïò±£´æ TCP socket¾ä±úµÄÄÚ´æ
- * @return ³É¹¦Ôò·µ»ØONT_ERR_OK
+ * ï¿½ï¿½ï¿½ï¿½TCP socketï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ë½«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+ * @param  sock Ö¸ï¿½ò±£´ï¿½ TCP socketï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½
+ * @return ï¿½É¹ï¿½ï¿½ò·µ»ï¿½ONT_ERR_OK
  */
 int ont_platform_tcp_create(ont_socket_t **sock);
 
 /**
- * ½¨Á¢TCPÁ¬½Ó
- * @param sock socket¾ä±ú
- * @param ip ·şÎñ¶ËIPµØÖ·
- * @param port ·şÎñ¶Ë¶Ë¿Ú
- * @return ³É¹¦Ôò·µ»ØONT_ERR_OK£¬Èç¹ûÕıÔÚÁ¬½Ó£¬·µ»ØONT_ERR_CONNECTING
+ * ï¿½ï¿½ï¿½ï¿½TCPï¿½ï¿½ï¿½ï¿½
+ * @param sock socketï¿½ï¿½ï¿½
+ * @param ip ï¿½ï¿½ï¿½ï¿½ï¿½IPï¿½ï¿½Ö·
+ * @param port ï¿½ï¿½ï¿½ï¿½Ë¶Ë¿ï¿½
+ * @return ï¿½É¹ï¿½ï¿½ò·µ»ï¿½ONT_ERR_OKï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó£ï¿½ï¿½ï¿½ï¿½ï¿½ONT_ERR_CONNECTING
  */
 int ont_platform_tcp_connect(ont_socket_t *sock, const char *ip, uint16_t port);
 
 /**
- * ·¢ËÍÊı¾İ
- * @param sock socket¾ä±ú
- * @param buf  Ö¸Ïò½«Òª±»·¢ËÍµÄÊı¾İ
- * @param size ½«Òª±»·¢ËÍÊı¾İµÄ×Ö½ÚÊı
- * @param bytes_sent [OUT] ³É¹¦·¢ËÍµÄ×Ö½ÚÊı
- * @return ·¢ËÍÊı¾İÕı³££¬·µ»ØONT_ERR_OK
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param sock socketï¿½ï¿½ï¿½
+ * @param buf  Ö¸ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param size ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İµï¿½ï¿½Ö½ï¿½ï¿½ï¿½
+ * @param bytes_sent [OUT] ï¿½É¹ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½Ö½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ONT_ERR_OK
  */
 int ont_platform_tcp_send(ont_socket_t *sock, const char *buf,
                           unsigned int size, unsigned int *bytes_sent);
 /**
- * ½ÓÊÕÊı¾İ
- * @param sock socket¾ä±ú
- * @param buf  Ö¸Ïò´æ´¢½ÓÊÕÊı¾İµÄ»º³åÇø
- * @param size ½ÓÊÕÊı¾İ»º³åÇø×î´ó×Ö½ÚÊı
- * @param bytes_read [OUT] Ğ´Èë»º³åÇøµÄ×Ö½ÚÊı
- * @return ½ÓÊÕÊı¾İÕı³££¬·µ»ØONT_ERR_OK
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param sock socketï¿½ï¿½ï¿½
+ * @param buf  Ö¸ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İµÄ»ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param size ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½
+ * @param bytes_read [OUT] Ğ´ï¿½ë»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ONT_ERR_OK
  */
 int ont_platform_tcp_recv(ont_socket_t *sock, char *buf,
                           unsigned int size, unsigned int *bytes_read);
 
 /**
- * ¹Ø±ÕTCP socket¾ä±ú
- * @param sock ½«Òª±»¹Ø±ÕµÄsocket¾ä±ú
+ * ï¿½Ø±ï¿½TCP socketï¿½ï¿½ï¿½
+ * @param sock ï¿½ï¿½Òªï¿½ï¿½ï¿½Ø±Õµï¿½socketï¿½ï¿½ï¿½
  */
 int ont_platform_tcp_close(ont_socket_t *sock);
 
-int ont_platform_udp_create(ont_socket_t **sock);
+//int ont_platform_udp_create(ont_socket_t **sock);
 
 /**
-* ½¨Á¢UDPÁ¬½Ó
-* @param sock socket¾ä±ú
-* @param ip ·şÎñ¶ËIPµØÖ·
-* @param port ·şÎñ¶Ë¶Ë¿Ú
-* @return ³É¹¦Ôò·µ»ØONT_ERR_OK£¬Èç¹ûÕıÔÚÁ¬½Ó£¬·µ»ØONT_ERR_CONNECTING
+* ï¿½ï¿½ï¿½ï¿½UDPï¿½ï¿½ï¿½ï¿½
+* @param sock socketï¿½ï¿½ï¿½
+* @param ip ï¿½ï¿½ï¿½ï¿½ï¿½IPï¿½ï¿½Ö·
+* @param port ï¿½ï¿½ï¿½ï¿½Ë¶Ë¿ï¿½
+* @return ï¿½É¹ï¿½ï¿½ò·µ»ï¿½ONT_ERR_OKï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó£ï¿½ï¿½ï¿½ï¿½ï¿½ONT_ERR_CONNECTING
 */
 int ont_platform_udp_send(ont_socket_t *sock, char *buf,
                           unsigned int size, unsigned int *bytes_sent);
 /**
-* ½ÓÊÕÊı¾İ
-* @param sock socket¾ä±ú
-* @param buf  Ö¸Ïò´æ´¢½ÓÊÕÊı¾İµÄ»º³åÇø
-* @param size ½ÓÊÕÊı¾İ»º³åÇø×î´ó×Ö½ÚÊı
-* @param bytes_read [OUT] Ğ´Èë»º³åÇøµÄ×Ö½ÚÊı
-* @return ½ÓÊÕÊı¾İÕı³££¬·µ»ØONT_ERR_OK
+* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* @param sock socketï¿½ï¿½ï¿½
+* @param buf  Ö¸ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İµÄ»ï¿½ï¿½ï¿½ï¿½ï¿½
+* @param size ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½
+* @param bytes_read [OUT] Ğ´ï¿½ë»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½
+* @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ONT_ERR_OK
 */
 int ont_platform_udp_recv(ont_socket_t *sock, char *buf,
                           unsigned int size, unsigned int *bytes_read);
 
 /**
-* ¹Ø±ÕUDP socket¾ä±ú
-* @param sock ½«Òª±»¹Ø±ÕµÄsocket¾ä±ú
+* ï¿½Ø±ï¿½UDP socketï¿½ï¿½ï¿½
+* @param sock ï¿½ï¿½Òªï¿½ï¿½ï¿½Ø±Õµï¿½socketï¿½ï¿½ï¿½
 */
 int ont_platform_udp_close(ont_socket_t *sock);
 
 
 /**
-* »ñÈ¡socket fd
+* ï¿½ï¿½È¡socket fd
 */
 int ont_platform_tcp_socketfd(ont_socket_t *sock);
 
+/* å§ã‚…åš±éæ¿å§é—‚ç’¾dpé‚å›¦æ¬¢é»å¿šå ªç»—?
+ */
+int ont_platform_udp_close_fd(ont_socket_t *sock);
 
+/* é’æ¶˜ç¼“udpé»å¿šå ªç»—?*/
+extern int
+ont_platform_udp_create_fd(ont_socket_t *sock);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -1,9 +1,8 @@
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.ont.odvp.sample.publish.PublishActivity"
-    android:id="@+id/root_layout">
+    android:layout_height="match_parent">
 
     <!--
     <com.google.android.exoplayer.AspectRatioFrameLayout
@@ -14,39 +13,28 @@
         android:layout_centerInParent="true"
         >
         -->
-    <com.ont.odvp.sample.publish.OntGLSurfaceView
-        android:id="@+id/cameraPreview_surfaceView"
+    <com.ont.odvp.sample.publish.OntSurfaceView
+        android:id="@+id/camera_preview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="match_parent" />
 
-        android:visibility="visible"
-        android:layout_gravity="center" />
-    <View
+    <!--<View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/transparent_cover"
-        android:background="#77000000"/>
-    <!--
-   </com.google.android.exoplayer.AspectRatioFrameLayout>
-    -->
-
+        android:background="#77000000"/>-->
 
     <RelativeLayout
         android:id="@+id/top_title"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:layout_alignParentTop="true"
-        android:padding="4dp"
-        android:orientation="horizontal"
-        android:visibility="visible"
-        android:layout_alignParentStart="true" >
+        android:layout_height="55dp" >
 
         <TextView
             android:id="@+id/stream_live_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="13dp"
             android:layout_centerVertical="true"
+            android:layout_marginLeft="17dp"
             android:textColor="#ffffffff"
             android:textSize="12sp"
             android:text="@string/live_indicator"
@@ -55,28 +43,28 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="13dp"
-            android:layout_alignParentRight="true"
+            android:layout_marginRight="17dp"
             android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/changeCameraButton"
+                android:id="@+id/change_camera"
                 android:layout_width="18dp"
                 android:layout_height="17dp"
                 android:onClick="changeCamera"
                 android:background="@mipmap/changecamera" />
 
             <ImageButton
-                android:id="@+id/settings_button"
+                android:id="@+id/settings_btn"
                 android:layout_width="18dp"
                 android:layout_height="17dp"
                 android:layout_marginLeft="26dp"
                 android:background="@mipmap/resolution" />
 
             <ImageButton
-                android:id="@+id/exitButton"
+                android:id="@+id/exit_btn"
                 android:layout_width="18dp"
                 android:layout_height="17dp"
                 android:layout_marginLeft="26dp"
@@ -86,39 +74,72 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="103dp"
-        android:layout_gravity="bottom"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="40dp"
         android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/toggle_record"
+            android:layout_marginLeft="21dp"
+            android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:layout_marginTop="45dp">
+            android:layout_weight="1"
+            android:textColor="@color/colorActivatedLine"
+            android:textSize="11sp"
+            android:text="@string/start_recording"
+            android:background="@drawable/btn_background_1" />
 
-            <Button
-                android:id="@+id/toggle_record"
-                android:layout_marginLeft="21dp"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:textColor="@color/colorActivatedLine"
-                android:textSize="11sp"
-                android:text="@string/start_recording"
-                android:background="@drawable/btn_background_1" />
-
-            <Button
-                android:id="@+id/toggle_broadcasting"
-                android:layout_marginLeft="12dp"
-                android:layout_marginRight="21dp"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:textColor="@color/colorActivatedLine"
-                android:textSize="11sp"
-                android:text="@string/start_broadcasting"
-                android:background="@drawable/btn_background_1" />
-        </LinearLayout>
+        <Button
+            android:id="@+id/toggle_broadcasting"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="21dp"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:textColor="@color/colorActivatedLine"
+            android:textSize="11sp"
+            android:text="@string/start_broadcasting"
+            android:background="@drawable/btn_background_1" />
     </LinearLayout>
-</android.support.design.widget.CoordinatorLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_zoom_seek"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/px40">
+
+        <ImageView
+            android:id="@+id/iv_zoom_add"
+            android:layout_width="@dimen/px70"
+            android:layout_height="@dimen/px70"
+            android:src="@mipmap/img_zoom_add"
+            android:padding="@dimen/px20"
+            android:layout_gravity="center_horizontal"/>
+
+        <com.ont.odvp.sample.publish.VerticalSeekBar
+            android:id="@+id/zoom_seek_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/px350"
+            android:layout_gravity="center_horizontal"/>
+
+        <ImageView
+            android:id="@+id/iv_zoom_minus"
+            android:layout_width="@dimen/px70"
+            android:layout_height="@dimen/px70"
+            android:src="@mipmap/img_zoom_minus"
+            android:padding="@dimen/px20"
+            android:layout_gravity="center_horizontal"/>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_focus"
+        android:layout_width="@dimen/px152"
+        android:layout_height="@dimen/px152"
+        android:src="@mipmap/img_click_focus"
+        android:visibility="gone"/>
+</RelativeLayout>

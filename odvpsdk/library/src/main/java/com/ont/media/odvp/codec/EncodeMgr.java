@@ -1,5 +1,6 @@
 package com.ont.media.odvp.codec;
 
+import com.ont.media.odvp.model.PublishConfig;
 import com.ont.media.odvp.record.Mp4Record;
 import com.ont.media.odvp.stream.OntStreamPusher;
 
@@ -9,10 +10,10 @@ import com.ont.media.odvp.stream.OntStreamPusher;
 
 public class EncodeMgr {
 
-    private boolean mAudio = true;
     private long mStartTimeUs;
     private AudioEncode mAudioEncode;
     private VideoEncode mVideoEncode;
+    private boolean isEnableAudio;
 
     public EncodeMgr(OntStreamPusher ontStreamPusher, Mp4Record mp4Record) {
 
@@ -20,81 +21,40 @@ public class EncodeMgr {
         mVideoEncode = new VideoEncode(ontStreamPusher, mp4Record);
     }
 
-    // is open audio
-    public void setAudio(boolean audio) {
-        this.mAudio = audio;
+    public void setPublishConfig(PublishConfig publishConfig) {
+
+        isEnableAudio = publishConfig.isEnableAudio();
+        mAudioEncode.setPublishConfig(publishConfig);
+        mVideoEncode.setPublishConfig(publishConfig);
     }
 
-    // audio config
-    public void setAudioSampleRate(int sampleRate) {
+    public int chooseVideoColorFormat(String name) {
 
-        mAudioEncode.setSampleRate(sampleRate);
+        return mVideoEncode.chooseColorFormat(name);
     }
 
-    public void setAudioChannelConfig(int channelConfig) {
-
-        mAudioEncode.setChannelConfig(channelConfig);
-    }
-
-    public void setAudioFormat(int format) {
-
-        mAudioEncode.setFormat(format);
-    }
-
-    public void setAudioBitrate(int bitrate) {
-
-        mAudioEncode.setBitrate(bitrate);
-    }
-
-    // video config
-    public void setVideoWidth(int width) {
-
-        mVideoEncode.setWidth(width);
-    }
-
-    public void setVideoHeight(int height) {
-
-        mVideoEncode.setHeight(height);
-    }
-
-    public void setVideoBitrate(int bitrate) {
-
-        mVideoEncode.setBitrate(bitrate);
-    }
-
-    public void setVideoIFrameInterval(int iFrameInterval) {
-
-        mVideoEncode.setIFrameInterval(iFrameInterval);
-    }
-
-    public void setVideoFrameRate(int frameRate) {
-
-        mVideoEncode.setFrameRate(frameRate);
-    }
-
-    public void setVideoColorFormat(int colorFormat) {
-
-        mVideoEncode.setColorFormat(colorFormat);
-    }
-
-    public void start() {
+    public boolean start() {
 
         mStartTimeUs = System.nanoTime() / 1000L;
 
-        if (mAudio) {
+        if (isEnableAudio) {
             mAudioEncode.init();
         }
-        mVideoEncode.init();
+        if (!mVideoEncode.init()) {
 
-        if (mAudio) {
+            return false;
+        }
+
+        if (isEnableAudio) {
             mAudioEncode.start();
         }
         mVideoEncode.start();
+        return true;
     }
 
     public void stop() {
 
-        if (mAudio) {
+        if (isEnableAudio) {
             mAudioEncode.stop();
         }
         mVideoEncode.stop();
@@ -105,9 +65,9 @@ public class EncodeMgr {
         mAudioEncode.onGetFrame(pcmFrame, length, mStartTimeUs);
     }
 
-    public void onGetVideoRgbaFrame(byte[] yuvFrame, int width, int height) {
+    public void onGetVideoRgbaFrame(byte[] rgbaFrame, int width, int height) {
 
-        mVideoEncode.onGetRGBAFrame(yuvFrame, width, height, mStartTimeUs);
+        mVideoEncode.onGetRGBAFrame(rgbaFrame, width, height, mStartTimeUs);
     }
 
     public void onGetVideoI420Frame(byte[] yuvFrame, int length) {
@@ -118,5 +78,10 @@ public class EncodeMgr {
     public void onGetVideoNV12Frame(byte[] yuvFrame, int length) {
 
         mVideoEncode.onGetNV12Frame(yuvFrame, length, mStartTimeUs);
+    }
+
+    public void onGetVideoNV21Frame(byte[] nv21Frame, boolean flip, int rotation, int width, int height) {
+
+        mVideoEncode.onGetNV21Frame(nv21Frame, flip, rotation, width, height, mStartTimeUs);
     }
 }

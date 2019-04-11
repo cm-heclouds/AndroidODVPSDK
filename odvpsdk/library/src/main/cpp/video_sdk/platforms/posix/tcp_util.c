@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <arpa/inet.h>
-
+#include <netinet/tcp.h>
 
 #include "error.h"
 #include "platform.h"
@@ -98,18 +98,32 @@ int ont_platform_tcp_send(ont_socket_t *sock, const char *buf,
                           unsigned int size, unsigned int *bytes_sent)
 {
     int ret;
-    int _sock=0;
+    int _sock = 0;
+    int len = 0;
+    struct tcp_info info;
+
     if ( !buf || !size || !bytes_sent || !sock )
     {
         return ONT_ERR_BADPARAM;
     }
+
     _sock  = sock->fd;
+
+    /* fix bug on linux: video sdk can't repush stream */
+    len = sizeof(struct tcp_info);
+    memset(&info, 0x00, sizeof(struct tcp_info));
+    ret = getsockopt(_sock, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&len);
+    if ((0 == ret) && (info.tcpi_state != TCP_ESTABLISHED))
+    {
+        return ONT_ERR_SOCKET_OP_FAIL;
+    }
+
 #ifdef __APPLE__
     ret = send(_sock , buf, size, 0);
 #else
     ret = send(_sock , buf, size, MSG_NOSIGNAL);
 #endif
-    if ( ret>=0 )
+    if ( ret >= 0 )
     {
         *bytes_sent = (int)ret;
         return ONT_ERR_OK;

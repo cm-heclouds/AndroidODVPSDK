@@ -7,6 +7,7 @@
 #include "device.h"
 #include "odvp_client.h"
 #include "android_log.h"
+#include "../../video_sdk/platforms/posix/port_sock.h"
 
 #define TOKENBUFSIZE 32
 
@@ -31,7 +32,7 @@ ont_device_t * device_create(ont_device_callback_t *cbs, void * cbs_weak_this) {
     return dev;
 }
 
-int device_connect(ont_device_t * dev, uint64_t device_id) {
+/*int device_connect(ont_device_t * dev, uint64_t device_id) {
 
     if (NULL == dev) {
 
@@ -43,6 +44,43 @@ int device_connect(ont_device_t * dev, uint64_t device_id) {
     dev->device_id = device_id;
 
     int err = ont_device_get_acc(dev, token);
+    if (ONT_ERR_OK != err) {
+        LOGE("Failed to get acc service, error=%d\n", err);
+        return err;
+    }
+
+    err = ont_device_connect(dev);
+    if (ONT_ERR_OK != err) {
+        ont_device_destroy(dev);
+        LOGE("Failed to connect to the server, error=%d\n", err);
+        return err;
+    }
+
+    err = ont_device_verify(dev, token);
+    if (ONT_ERR_OK != err) {
+        LOGE("Failed to verify device, error=%d\n", err);
+        return err;
+    }
+    return err;
+}*/
+
+int device_connect_by_addr(ont_device_t * dev, uint64_t device_id, char* ip, uint64_t port) {
+
+    if (NULL == dev) {
+
+        return ONT_ERR_BADPARAM;
+    }
+
+    static char token[TOKENBUFSIZE];
+    dev->product_id = 1;
+    dev->device_id = device_id;
+
+    ont_socket_t *_sock;
+    _sock = (ont_socket_t*)ont_platform_malloc(sizeof(ont_socket_t));
+    _sock->port = port;
+    sprintf(_sock->ip, "%s", ip);
+
+    int err = ont_device_get_acc_by_udp_addr(dev, _sock, token);
     if (ONT_ERR_OK != err) {
         LOGE("Failed to get acc service, error=%d\n", err);
         return err;

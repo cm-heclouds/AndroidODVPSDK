@@ -28,6 +28,7 @@ import com.ont.odvp.sample.publish.PublishActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import static com.ont.odvp.sample.device.FileUtils.getMediaInfoViaRetriver;
 
@@ -39,6 +40,8 @@ public class MainActivity extends BaseActivity {
     private boolean mLoading;
     private EditText regCodeEt;
     private EditText authInfoEt;
+    private EditText serverIpEt;
+    private EditText serverPortEt;
     private TextView mTextPush;
 
     @Override
@@ -51,9 +54,11 @@ public class MainActivity extends BaseActivity {
         bindEditWatcher();
 
         if (!get()) {
-
-            regCodeEt.setText("xxxxxxxxxxxxxxx");
-            authInfoEt.setText("xxxxx");
+            Properties properties = PropertyUtils.getProperties(this);
+            regCodeEt.setText(properties.getProperty("device.reg.code"));
+            authInfoEt.setText(properties.getProperty("device.auth.info"));
+            serverIpEt.setText(properties.getProperty("device.server.ip"));
+            serverPortEt.setText(properties.getProperty("device.server.port"));
         }
 
         OntOdvpProxy.getInstance().init(getString("odvp_device_info", "server_device_id"), getByteArray("odvp_device_info", "server_auth_code"));
@@ -64,6 +69,8 @@ public class MainActivity extends BaseActivity {
 
         regCodeEt = findViewById(R.id.reg_code);
         authInfoEt = findViewById(R.id.auth_info);
+        serverIpEt = findViewById(R.id.server_ip);
+        serverPortEt = findViewById(R.id.server_port);
 
         mTextPush = findViewById(R.id.text_push);
         mTextPush.setOnClickListener(new View.OnClickListener() {
@@ -75,7 +82,7 @@ public class MainActivity extends BaseActivity {
                 save();
 
                 int ret = 0;
-                ret = OntOdvpProxy.getInstance().connect(new DeviceInfo(getRegCode(), getAuthInfo()), cmdListener, new ICallback() {
+                ret = OntOdvpProxy.getInstance().connect(new DeviceInfo(getRegCode(), getAuthInfo(), getServerIp(), getServerPort()), cmdListener, new ICallback() {
                     @Override
                     public void onCallback(int ret, Object... parms) {
 
@@ -114,9 +121,11 @@ public class MainActivity extends BaseActivity {
             if (channel == 1) {
 
                 return 0;
-            } else {
+            } else if (BuildConfig.onvifType == 1) {
 
-                return OntOnvif.nativeLiveStreamCtrl(deviceReference, channel, level);//onvif设备
+                return OntOnvif.liveStreamCtrl(deviceReference, channel, level);//onvif设备
+            } else {
+                return 0;
             }
         }
 
@@ -125,8 +134,10 @@ public class MainActivity extends BaseActivity {
 
             if (1 == channel) {
                 return 0;
+            } else if (BuildConfig.onvifType == 1) {
+                return OntOnvif.liveStreamPlay(deviceReference, channel, proType, min, pushUrl);//onvif设备
             } else {
-                return OntOnvif.nativeLiveStreamPlay(deviceReference, channel, proType, min, pushUrl);//onvif设备
+                return 0;
             }
         }
 
@@ -140,11 +151,11 @@ public class MainActivity extends BaseActivity {
         public int videoDevPtzCtrl(long deviceReference, int channel, int mode, int ptzCmd, int speed) {
 
             if (channel == 1) {
-
                 return 0;
+            } else if (BuildConfig.onvifType == 1) {
+                return OntOnvif.devPtzCtrl(deviceReference, channel, mode, ptzCmd, speed);//onvif设备
             } else {
-
-                return OntOnvif.nativeDevPtzCtrl(deviceReference, channel, mode, ptzCmd, speed);//onvif设备
+                return 0;
             }
         }
 
@@ -193,12 +204,24 @@ public class MainActivity extends BaseActivity {
         return authInfoEt.getText().toString();
     }
 
+    public String getServerIp() {
+
+        return serverIpEt.getText().toString();
+    }
+
+    public String getServerPort() {
+
+        return serverPortEt.getText().toString();
+    }
+
     public void save() {
 
         SharedPreferences sp = getSharedPreferences("odvp_device_info", Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = sp.edit();
         edit.putString("reg_code", getRegCode());
         edit.putString("auth_info", getAuthInfo());
+        edit.putString("server_ip", getServerIp());
+        edit.putString("server_port", getServerPort());
         edit.commit();
     }
 
@@ -225,20 +248,26 @@ public class MainActivity extends BaseActivity {
 
         String regCode = "";
         String authInfo = "";
+        String serverIp = "";
+        String serverPort = "";
 
         SharedPreferences sp = getSharedPreferences("odvp_device_info", Context.MODE_PRIVATE);
         if (sp != null) {
 
             regCode = sp.getString("reg_code", "");
             authInfo = sp.getString("auth_info", "");
+            serverIp = sp.getString("server_ip", "");
+            serverPort = sp.getString("server_port", "");
 
-            if (TextUtils.isEmpty(regCode) || TextUtils.isEmpty(authInfo)) {
+            if (TextUtils.isEmpty(regCode) || TextUtils.isEmpty(authInfo) || TextUtils.isEmpty(serverIp) || TextUtils.isEmpty(serverPort)) {
 
                 return false;
             }
 
             regCodeEt.setText(regCode);
             authInfoEt.setText(authInfo);
+            serverIpEt.setText(serverIp);
+            serverPortEt.setText(serverPort);
             return true;
         } else {
 

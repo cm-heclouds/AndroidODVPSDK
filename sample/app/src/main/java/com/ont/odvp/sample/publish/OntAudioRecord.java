@@ -2,14 +2,12 @@ package com.ont.odvp.sample.publish;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
 import android.media.audiofx.NoiseSuppressor;
 
-import com.ont.media.odvp.utils.OntLog;
-import com.ont.media.odvp.def.IEncodeDef;
 import com.ont.media.odvp.codec.EncodeMgr;
+import com.ont.media.odvp.utils.OntLog;
 
 /**
  * Created by betali on 2018/1/15.
@@ -33,17 +31,15 @@ public class OntAudioRecord {
         this.mEncodeMgr = encodeMgr;
     }
 
-    public int initChannelConfig() {
+    public int chooseChannelConfig(int audioSource, int audioSampleRate, int audioSampleSize) {
 
         int channelConfig = 0;
-        int bufferSize = AudioRecord.getMinBufferSize(IEncodeDef.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, IEncodeDef.AUDIO_FORMAT);
-        /*mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, IEncodeDef.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, IEncodeDef.AUDIO_FORMAT, bufferSize);*/
-        mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, IEncodeDef.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, IEncodeDef.AUDIO_FORMAT, bufferSize);
+        int bufferSize = AudioRecord.getMinBufferSize(audioSampleRate, AudioFormat.CHANNEL_IN_STEREO, audioSampleSize);
+        mAudioRecord = new AudioRecord(audioSource, audioSampleRate, AudioFormat.CHANNEL_IN_STEREO, audioSampleSize, bufferSize);
         if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
 
-            bufferSize = AudioRecord.getMinBufferSize(IEncodeDef.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, IEncodeDef.AUDIO_FORMAT);
-            /*mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, IEncodeDef.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, IEncodeDef.AUDIO_FORMAT, bufferSize);*/
-            mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, IEncodeDef.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, IEncodeDef.AUDIO_FORMAT, bufferSize);
+            bufferSize = AudioRecord.getMinBufferSize(audioSampleRate, AudioFormat.CHANNEL_IN_MONO, audioSampleSize);
+            mAudioRecord = new AudioRecord(audioSource, audioSampleRate, AudioFormat.CHANNEL_IN_MONO, audioSampleSize, bufferSize);
 
             channelConfig = AudioFormat.CHANNEL_IN_MONO;
         } else {
@@ -52,6 +48,13 @@ public class OntAudioRecord {
 
         mAudioData = new byte[bufferSize];
         return channelConfig;
+    }
+
+    public void initChannelConfig(int audioSource, int audioSampleRate, int audioSampleSize, int audioChannelConfig) {
+
+        int bufferSize = AudioRecord.getMinBufferSize(audioSampleRate, audioChannelConfig, audioSampleSize);
+        mAudioRecord = new AudioRecord(audioSource, audioSampleRate, audioChannelConfig, audioSampleSize, bufferSize);
+        mAudioData = new byte[bufferSize];
     }
 
     public boolean start() {

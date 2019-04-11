@@ -94,9 +94,6 @@ int ont_video_live_stream_start_level(void *dev, int channel, const char *push_u
 	ont_list_node_t *node;
 	struct ont_timeval tv;
 	ont_gettimeofday(&tv, NULL);
-    #if 0 /* unused variable */
-    unsigned long ts = (tv.tv_usec / 1000 + tv.tv_sec * 1000);
-    #endif
     VARAIBLE_CHECK;
 
 	data2.channel = channel;
@@ -153,7 +150,7 @@ int ont_video_live_stream_start(void *dev, int channel)
 	return 0;
 }
 
-int ont_video_live_stream_rtmp_publish(ont_device_t *dev, int32_t channel, uint8_t protype, uint16_t ttl_min, const char *push_url)
+int32_t ont_video_live_stream_rtmp_publish(ont_device_t *dev, int32_t channel, uint8_t protype, uint16_t ttl_min, const char *push_url)
 {
 	VARAIBLE_CHECK;
 	ont_list_node_t *node;
@@ -426,9 +423,6 @@ static int _checkneedclose(void *dev)
 
 int _check_publish_status(t_playlist *d1, t_playlist *d2)
 {
-    #if 0 /* unused variable */
-	struct ont_timeval tv;
-    #endif
 	ont_onvif_playctx *playctx = d1->playctx;
     if (d1->type != 1)
     {
@@ -532,112 +526,5 @@ int ont_video_playlist_singlestep(void *dev)
 	return delta;
 }
 
-int32_t _ont_cmd_dev_query_files(void *dev, int32_t channel, int32_t startindex, int32_t max, const char *startTime, const char *stopTime, ont_video_file_t **files, int32_t *filenum, int32_t *totalnum)
-{
-	/*int num = 0;
-	int totalcount = cfg_get_rvod_nums();
-	int channel_index = 0;
-	ont_video_file_t *record;
-	struct _onvif_rvod * rvods = cfg_get_rvods();
-	int i = 0;
-	int localindex = 0;
-	record = ont_platform_malloc(max * sizeof(ont_video_file_t));
-	int year1, month1, day1, hour1, min1, sec1;
-	int year2, month2, day2, hour2, min2, sec2;
-	int year3, month3, day3, hour3, min3, sec3;
-	int tm1, tm2, tm3, tm11, tm22, tm33;
-
-	*totalnum = 0;
-	year1 = month1 = day1 = hour1 = min1 = sec1 = 0;
-	year2 = month2 = day2 = hour2 = min2 = sec2 = 0;
-	year3 = month3 = day3 = hour3 = min3 = sec3 = 0;
-
-	if (startTime)
-	{
-		sscanf(startTime, "%d-%d-%d %d:%d:%d", &year1, &month1, &day1, &hour1, &min1, &sec1);
-	}
-	if (stopTime)
-	{
-		sscanf(stopTime, "%d-%d-%d %d:%d:%d", &year2, &month2, &day2, &hour2, &min2, &sec2);
-	}
-	tm1 = year1 * 10000 + month1 * 100 + day1;
-	tm11 = hour1 * 3600 + min1 * 60 + sec1;
-
-	tm2 = year2 * 10000 + month2 * 100 + day2;
-	tm22 = hour2 * 3600 + min2 * 60 + sec2;
-
-	for (i = 0; i < totalcount; i++)
-	{
-		if (rvods[i].channelid != channel)
-		{
-			continue;
-		}
-		/*compare time */
-//		if (startTime || stopTime)
-//		{
-//			sscanf(rvods[i].beginTime, "%d-%d-%d %d:%d:%d", &year3, &month3, &day3, &hour3, &min3, &sec3);
-//			tm3 = year3 * 10000 + month3 * 100 + day3;
-//			tm33 = hour3 * 3600 + min3 * 60 + sec3;
-//			if (startTime && tm3<tm1)
-//			{
-//				/*not used*/
-//				continue;
-//			}
-//			else if (startTime && tm3 == tm1)
-//			{
-//				if (tm33 < tm11)
-//				{
-//					continue;
-//				}
-//			}
-//
-//			if (stopTime && tm3 > tm2)
-//			{
-//				continue;
-//			}
-//			else if (stopTime && tm3 == tm2)
-//			{
-//				if (tm33 > tm22)
-//				{
-//					continue;
-//				}
-//			}
-//
-//		}
-//		num++;
-//		channel_index++;
-//		if (channel_index - 1 < startindex)
-//		{
-//			continue;
-//		}
-//
-//		if (channel_index - startindex > max)
-//		{
-//			continue;
-//		}
-//
-//		localindex = channel_index - startindex;
-//		record[localindex - 1].channel = channel;
-//		record[localindex - 1].size = rvods[i].size;
-//		ont_platform_snprintf(record[localindex - 1].descrtpion, sizeof(record[localindex - 1].descrtpion), "%s", rvods[i].videoDesc);
-//		ont_platform_snprintf(record[localindex - 1].begin_time, sizeof(record[localindex - 1].begin_time), "%s", rvods[i].beginTime);
-//		ont_platform_snprintf(record[localindex - 1].end_time, sizeof(record[localindex - 1].end_time), "%s", rvods[i].endTime);
-//
-//	}
-//	if (localindex>0)
-//	{
-//		*files = record;
-//		*filenum = localindex;
-//	}
-//	else
-//	{
-//		ont_platform_free(record);
-//		*files = NULL;
-//		*filenum = 0;
-//	}
-//	*totalnum = num;*/
-//
-//	return 0;
-}
 
 

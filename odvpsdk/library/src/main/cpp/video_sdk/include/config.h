@@ -20,14 +20,14 @@
  *
  * 服务器地址
  */
-#define ONT_SERVER_ADDRESS        "183.230.40.42"
+/* #undef ONT_SERVER_ADDRESS */
 
 /**
  * @def ONT_SERVER_ADDRESS
  *
  * 服务器端口
  */
-#define ONT_SERVER_PORT           9101
+/* #undef ONT_SERVER_PORT */
 
 /**
  * @def ONT_SERVER_PATH

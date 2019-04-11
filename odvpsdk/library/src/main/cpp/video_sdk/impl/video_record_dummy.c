@@ -20,7 +20,7 @@
 #include "video_record.h"
 
 
-int ont_record_channel_cmd_update(void *dev, int32_t channel, int32_t status, int32_t seconds, char url[255])
+int32_t ont_record_channel_cmd_update(void *dev, int32_t channel, int32_t status, int32_t seconds, char url[255])
 {
 	return -1;
 }

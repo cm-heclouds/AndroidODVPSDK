@@ -13,4 +13,8 @@ public interface IPublishEventListener {
     void onDisconnect();
     void onStopRecord();
     void onCameraResolutionUpdate();
+    void onNetworkWeak();
+    void onNetworkResume();
+    void onCameraAutoFocusCallback(boolean success);
+    void onCameraOpen();
 }

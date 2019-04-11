@@ -19,9 +19,8 @@
 #define  ONT_ERR_NOMEM                      -12
 #define  ONT_ERR_ENC_FAIL                   -13
 #define  ONT_ERR_DEC_FAIL                   -14
-
-
-
+#define ONT_ERR_ON_CONF                     -15
+#define ONT_ERR_STREAM_DISCONN              -16
 
 typedef enum _ONT_PLATFORM_CODE_t
 {

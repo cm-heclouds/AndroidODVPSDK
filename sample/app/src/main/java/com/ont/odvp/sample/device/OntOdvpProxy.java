@@ -54,7 +54,7 @@ public class OntOdvpProxy {
 
     public boolean isConnect() {
 
-        return mCmdExecutor.isConnect();
+        return mCmdExecutor != null && mCmdExecutor.isConnect();
     }
 
     public String getDeviceId() {

@@ -15,7 +15,14 @@ public class OntOnvif {
      * @param configBuf onvif摄像头配置文件路径
      * @return 0 =  成功， < 0 失败
      */
-    public static native int nativeAddChannel(long dev, String configBuf);
+    public static int addChannel(long dev, String configBuf) {
+
+        if (BuildConfig.onvifType == 1) {
+            return nativeAddChannel(dev, configBuf);
+        } else {
+            return 0;
+        }
+    }
 
     /**
      * 直播
@@ -23,7 +30,14 @@ public class OntOnvif {
      * @param pushUrl 推流地址
      * @return 0 =  成功， < 0 失败
      */
-    public static native int nativeLiveStreamPlay(long dev, int channel, byte proType, int min, String pushUrl);
+    public static int liveStreamPlay(long dev, int channel, byte proType, int min, String pushUrl) {
+
+        if (BuildConfig.onvifType == 1) {
+            return nativeLiveStreamPlay(dev, channel, proType, min, pushUrl);
+        } else {
+            return 0;
+        }
+    }
 
     /**
      * 直播清晰度调整
@@ -31,7 +45,14 @@ public class OntOnvif {
      * @param level 清晰度
      * @return 0 =  成功， < 0 失败
      */
-    public static native int nativeLiveStreamCtrl(long dev, int channel, int level);
+    public static int liveStreamCtrl(long dev, int channel, int level) {
+
+        if (BuildConfig.onvifType == 1) {
+            return nativeLiveStreamCtrl(dev, channel, level);
+        } else {
+            return 0;
+        }
+    }
 
     /**
      * 摄像头控制
@@ -41,5 +62,17 @@ public class OntOnvif {
      * @param speed 速度
      * @return 0 =  成功， < 0 失败
      */
-    public static native int nativeDevPtzCtrl(long dev, int channel, int mode, int cmd, int speed);
+    public static int devPtzCtrl(long dev, int channel, int mode, int cmd, int speed) {
+
+        if (BuildConfig.onvifType == 1) {
+            return nativeDevPtzCtrl(dev, channel, mode, cmd, speed);
+        } else {
+            return 0;
+        }
+    }
+
+    private static native int nativeAddChannel(long dev, String configBuf);
+    private static native int nativeLiveStreamPlay(long dev, int channel, byte proType, int min, String pushUrl);
+    private static native int nativeLiveStreamCtrl(long dev, int channel, int level);
+    private static native int nativeDevPtzCtrl(long dev, int channel, int mode, int cmd, int speed);
 }

@@ -55,7 +55,7 @@ public class OntOdvp {
      * @param deviceId 设备ID，只能为合法数字
      * @return 0 = 成功， < 0 失败
      */
-    public static native int nativeDeviceConnect(long dev, String deviceId);
+    public static native int nativeDeviceConnect(long dev, String deviceId, String ip, String port);
 
     /**
      * 密钥交换

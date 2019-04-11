@@ -60,7 +60,7 @@ UsageEnvironment& BasicUsageEnvironment::operator<<(char const* str) {
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(int i) {
-  fprintf(stderr, "%d", i);
+  //fprintf(stderr, "%d", i);
   return *this;
 }
 

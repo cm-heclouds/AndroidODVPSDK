@@ -3,28 +3,32 @@ package com.ont.odvp.sample.publish;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.media.AudioFormat;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
-import com.ont.odvp.sample.def.IGLViewEventListener;
-import com.ont.odvp.sample.def.IPublishEventListener;
-import com.ont.odvp.sample.def.IPathDef;
+import com.ont.media.odvp.OntFormat;
 import com.ont.media.odvp.codec.EncodeMgr;
+import com.ont.media.odvp.def.IEncodeDef;
 import com.ont.media.odvp.def.IStreamDef;
+import com.ont.media.odvp.model.PublishConfig;
 import com.ont.media.odvp.model.Resolution;
 import com.ont.media.odvp.player.AudioPlayer;
 import com.ont.media.odvp.record.Mp4Record;
 import com.ont.media.odvp.record.Mp4RecordHandler;
 import com.ont.media.odvp.stream.OntStreamPusher;
+import com.ont.odvp.sample.def.IGLViewEventListener;
+import com.ont.odvp.sample.def.IPathDef;
+import com.ont.odvp.sample.def.IPublishEventListener;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -38,16 +42,18 @@ public class PublishProxy {
     private Activity mHostPage;
     private IPublishEventListener mPublishEventListener;
 
-    private OntGLSurfaceView mGLSurfaceView;
+    private OntSurfaceView mGLSurfaceView;
     private EncodeMgr mEncodeMgr;
     private OntAudioRecord mOntAudioRecord;
     private OntStreamPusher mOntStreamPusher;
     private Mp4Record mMp4Record;
     private AudioPlayer mAudioPlayer;
+    private PublishConfig mPublishConfig;
 
     private String mPublishUrl;
     private String mDeviceId;
     private boolean mPublishing;
+    private boolean mNetworkWeakTriggered = false;
     private int count = 0;
 
     private Handler mPublishHandler = new Handler() {
@@ -60,7 +66,7 @@ public class PublishProxy {
                 case IStreamDef.ON_PUBLISH_STREAM_DISCONNECT:
 
                     if (mPublishing) {
-                        stopPublish();
+                        stopPublish(true);
                         if (mPublishEventListener != null) {
 
                             mPublishEventListener.onDisconnect();
@@ -81,7 +87,7 @@ public class PublishProxy {
         }
     };
 
-    public PublishProxy(Activity hostPage, OntGLSurfaceView glSurfaceView, IPublishEventListener publishEventListener) {
+    public PublishProxy(Activity hostPage, OntSurfaceView glSurfaceView, IPublishEventListener publishEventListener) {
 
         mHostPage = hostPage;
         mGLSurfaceView = glSurfaceView;
@@ -97,7 +103,20 @@ public class PublishProxy {
         mOntAudioRecord = new OntAudioRecord(mEncodeMgr);
     }
 
-    public void openCamera(int cameraId) {
+    public void setPublishConfig(PublishConfig publishConfig) {
+
+        if (publishConfig == null) {
+
+            this.mPublishConfig = new PublishConfig();
+        } else {
+
+            this.mPublishConfig = publishConfig;
+        }
+
+        mGLSurfaceView.setPublishConfig(mPublishConfig.getVideoFrameRate());
+    }
+
+    public void openCamera(int cameraId, boolean firstInstall) {
 
         if (!isPermissionGranted())
         {
@@ -123,42 +142,77 @@ public class PublishProxy {
         mAudioPlayer.onResume();
     }
 
-    public boolean startPublish(String pushUrl, String deviceId) {
+    public boolean startPublish(String pushUrl, String deviceId, boolean startStream) {
 
         mPublishUrl = pushUrl;
         mDeviceId = deviceId;
-        int channelConfig = mOntAudioRecord.initChannelConfig();
 
-        mOntStreamPusher.setWidth(mGLSurfaceView.getResolutionWidth());
-        mOntStreamPusher.setHeight(mGLSurfaceView.getResolutionHeight());
-        mOntStreamPusher.setChannelConfig(channelConfig == AudioFormat.CHANNEL_IN_STEREO ? 1 : 0);
-        mOntStreamPusher.start(pushUrl, deviceId);
+        // init publish config
+        if (mPublishConfig.isEnableAudio()) {
 
-        mEncodeMgr.setAudioChannelConfig(channelConfig);
-        mEncodeMgr.setVideoWidth(mGLSurfaceView.getResolutionWidth());
-        mEncodeMgr.setVideoHeight(mGLSurfaceView.getResolutionHeight());
-        mEncodeMgr.setVideoBitrate(mGLSurfaceView.getBitrate());
-        mEncodeMgr.start();
+            if (mPublishConfig.getAudioChannelConfig() == 0) {
+                mPublishConfig.setAudioChannelConfig(mOntAudioRecord.chooseChannelConfig(mPublishConfig.getAudioSource(), mPublishConfig.getAudioSampleRate(), mPublishConfig.getAudioSampleSize()));
+            } else {
+                mOntAudioRecord.initChannelConfig(mPublishConfig.getAudioSource(), mPublishConfig.getAudioSampleRate(), mPublishConfig.getAudioSampleSize(), mPublishConfig.getAudioChannelConfig());
+            }
+        }
+        if (mPublishConfig.getVideoColorFormat() == 0) {
+            mPublishConfig.setVideoColorFormat(mEncodeMgr.chooseVideoColorFormat(null));
+        }
+        mPublishConfig.setWidth(mGLSurfaceView.getResolutionWidth());
+        mPublishConfig.setHeight(mGLSurfaceView.getResolutionHeight());
+        mPublishConfig.setVideoBitrate(mGLSurfaceView.getBitrate());
 
-        mOntAudioRecord.start();
+        // init stream
+		if (startStream) {
+        	
+			mOntStreamPusher.start(pushUrl, deviceId);
+		}
+        mOntStreamPusher.setPublishConfig(mPublishConfig);
+        mOntStreamPusher.sendMetadata();
+
+        // init encoder
+        if (mPublishConfig.isWaterMark()) {
+            String format = "yyyy-MM-dd HH:mm:ss";
+            OntFormat.WaterMarkInit(50, 50, format.length());
+        }
+        mEncodeMgr.setPublishConfig(mPublishConfig);
+        if (!mEncodeMgr.start()) {
+
+            stopPublish(true);
+            return false;
+        }
+
+        // init audio Record
+        if (mPublishConfig.isEnableAudio()) {
+
+            mOntAudioRecord.start();
+        }
         mGLSurfaceView.enableRecord();
         mAudioPlayer.setPublishRunning(true);
         mPublishing = true;
         return true;
     }
 
-    public boolean stopPublish() {
+    public boolean stopPublish(boolean stopStream) {
 
         mAudioPlayer.setPublishRunning(false);
         mAudioPlayer.stop();
         mMp4Record.stop();
         mGLSurfaceView.disableRecord();
-        mOntAudioRecord.stop();
+        if (mPublishConfig.isEnableAudio()) {
+            mOntAudioRecord.stop();
+        }
         mEncodeMgr.stop();
-        mOntStreamPusher.stop();
+        if (mPublishConfig.isWaterMark()) {
+            OntFormat.WaterMarkRelease();
+        }
 
-        mPublishing = false;
+        if (stopStream) {
 
+            mOntStreamPusher.stop();
+            mPublishing = false;
+        }
         if (mPublishEventListener != null) {
 
             mPublishEventListener.onStopRecord();
@@ -166,9 +220,9 @@ public class PublishProxy {
         return true;
     }
 
-    public void startRecord() {
+    public boolean startRecord() {
 
-        mMp4Record.record(new File(genOntVideoName()));
+        return mMp4Record.record(new File(genOntVideoName()));
     }
 
     public void stopRecord() {
@@ -222,13 +276,14 @@ public class PublishProxy {
 
         boolean publishing = mPublishing;
         if (publishing) {
-            stopPublish();
+
+            stopPublish(true);
         }
 
         mGLSurfaceView.updateDisplayOrientation();
         if (publishing) {
 
-            startPublish(mPublishUrl, mDeviceId);
+            startPublish(mPublishUrl, mDeviceId, true);
         }
     }
 
@@ -253,16 +308,32 @@ public class PublishProxy {
         final boolean isResolutionChange = mGLSurfaceView.changeCamera();
         if (publishing && isResolutionChange) {
 
-            startPublish(mPublishUrl, mDeviceId);
+            startPublish(mPublishUrl, mDeviceId, true);
         }
     }
 
     private IGLViewEventListener mGLViewEventListener = new IGLViewEventListener() {
 
         @Override
-        public void onGetVideoFrame(byte[] data, int width, int height) {
+        public void onGetVideoFrame(byte[] data, boolean flip, int rotation, int width, int height) {
 
-            mEncodeMgr.onGetVideoRgbaFrame(data, width, height);
+            AtomicInteger videoMsgCacheNumber = mOntStreamPusher.getVideoMsgCacheNumber();
+            if (videoMsgCacheNumber == null || videoMsgCacheNumber.get() > IEncodeDef.VIDEO_MAX_CACHE_NUMBER) {
+
+                if (!mNetworkWeakTriggered) {
+
+                    mNetworkWeakTriggered = true;
+                    mPublishEventListener.onNetworkWeak();
+                }
+            } else {
+
+                if (mNetworkWeakTriggered) {
+
+                    mNetworkWeakTriggered = false;
+                    mPublishEventListener.onNetworkResume();
+                }
+                mEncodeMgr.onGetVideoNV21Frame(data, flip, rotation, width, height);
+            }
         }
 
         @Override
@@ -276,15 +347,27 @@ public class PublishProxy {
 
             if (mPublishing && isResolutionChange) {
 
-                stopPublish();
+                stopPublish(true);
             }
+        }
+
+        @Override
+        public void onCameraAutoFocusCallback(boolean success) {
+
+            mPublishEventListener.onCameraAutoFocusCallback(success);
+        }
+
+        @Override
+        public void onCameraOpen() {
+
+            mPublishEventListener.onCameraOpen();
         }
     };
 
     private String genOntVideoName() {
 
         Date date = new Date(System.currentTimeMillis());
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA);
         return IPathDef.VOD_FILE_PATH + File.separator + format.format(date) + ".mp4";
     }
 }

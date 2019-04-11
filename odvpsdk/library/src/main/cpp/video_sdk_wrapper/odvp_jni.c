@@ -265,11 +265,15 @@ fail:
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ont_media_odvp_OntOdvp_nativeDeviceConnect(JNIEnv *env, jobject instance, jlong dev, jstring device_id_) {
+Java_com_ont_media_odvp_OntOdvp_nativeDeviceConnect(JNIEnv *env, jobject instance, jlong dev, jstring device_id_, jstring ip_, jstring port_) {
 
     const char *device_id = J4A_GetStringUTFChars(env, device_id_, 0);
-    int ret = device_connect((ont_device_t *)dev, strtoull(device_id, NULL, 10));
+    const char *ip = J4A_GetStringUTFChars(env, ip_, 0);
+    const char *port = J4A_GetStringUTFChars(env, port_, 0);
+    int ret = device_connect_by_addr((ont_device_t *)dev, strtoull(device_id, NULL, 10), ip, strtoull(port, NULL, 10));
     J4A_ReleaseStringUTFChars(env, device_id_, device_id);
+    J4A_ReleaseStringUTFChars(env, ip_, ip);
+    J4A_ReleaseStringUTFChars(env, port_, port);
     return ret;
 }
 

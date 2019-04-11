@@ -6,20 +6,20 @@ static def releaseTime() {
 
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion gradle.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.ont.odvp.sample"
-        minSdkVersion 17
-        targetSdkVersion 27
-        versionCode 3
-        versionName "1.0.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        minSdkVersion gradle.ext.minSdkVersion
+        targetSdkVersion gradle.ext.targetSdkVersion
+        versionCode gradle.ext.appVersionCode
+        versionName gradle.ext.appVersion
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField "int", "onvifType", "${gradle.ext.onvifType}"
         }
         debug {
             debuggable true
@@ -28,6 +28,7 @@ android {
             renderscriptOptimLevel 3
             minifyEnabled false
             zipAlignEnabled true
+            buildConfigField "int", "onvifType", "${gradle.ext.onvifType}"
         }
     }
 
@@ -47,11 +48,10 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:appcompat-v7:27.0.2'
-    implementation 'com.android.support:design:27.0.2'
+    implementation "com.android.support:appcompat-v7:${gradle.ext.supportLibraryVersion}"
+    implementation "com.android.support:design:${gradle.ext.supportLibraryVersion}"
     implementation 'com.google.code.gson:gson:2.8.1'
-    implementation 'com.tencent.bugly:crashreport:latest.release'
-    implementation 'com.tencent.bugly:nativecrashreport:latest.release'
     implementation 'com.squareup.picasso:picasso:2.5.0'
-    implementation 'com.ont.media:odvp-onvif:1.0.0'
+    implementation (name: "${gradle.ext.odvpName}-${gradle.ext.odvpVersion}", ext: 'aar')
+    //implementation "com.ont.media:${gradle.ext.odvpName}:${gradle.ext.odvpVersion}"
 }

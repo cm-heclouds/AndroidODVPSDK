@@ -9,9 +9,15 @@
 
 ### 特性
 
+- 1.0.0
 - 支持odvp设备接入协议
 - 支持直播流、历史流和onvif设备流的推送
 - MP4文件录制(仅供参考)
+
+- 1.0.1
+- 支持时间水印
+- 支持摄像头对焦，变焦
+- 发热优化
 
 ### 获取
     
@@ -26,41 +32,28 @@ allprojects {
 
 dependencies {
     # with onvif
-    //implementation 'com.ont.media:odvp-onvif:1.0.0'
+    //implementation 'com.ont.media:odvp-onvif:1.0.1'
     # without onvif
-	implementation 'com.ont.media:odvp:1.0.0'
+	implementation 'com.ont.media:odvp:1.0.1'
 }
 ```
 
-### 编译选项
+### 编译及参数设置
 
-``` 
-# build.gradle
-externalNativeBuild {
-    cmake {
-        arguments '-D_ONVIF=1' // 0或者不写：不编译onvif
-        abiFilters "armeabi-v7a","arm64-v8a","x86","x86_64"
-    }
-}
-
-# CMakeList.txt
-if(NOT ONT_SERVER_ADDRESS)
-    set(ONT_SERVER_ADDRESS "183.230.40.42")
-endif()
-if(NOT ONT_SERVER_PORT)
-    set(ONT_SERVER_PORT 9101)
-endif()
-``` 
+- [odvpsdk配置](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/odvpsdk/build.properties)
+- [sample配置](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/sample/build.properties)
+- [参数配置](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/sample/app/src/main/res/raw/config)
 
 ### api
 
 - [设备接入](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/odvpsdk/library/src/main/java/com/ont/media/odvp/OntOdvp.java)
+- [推流参数配置](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/odvpsdk/library/src/main/java/com/ont/media/odvp/model/PublishConfig.java)
 - [RTMP推流](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/odvpsdk/library/src/main/java/com/ont/media/odvp/OntRtmp.java)
 - [onvif推流](https://github.com/cm-heclouds/AndroidODVPSDK/blob/master/odvpsdk/library/src/main/java/com/ont/media/odvp//OntOnvif.java)
 
 ### License
 ```
-Copyright (c) 2018 cmiot
+Copyright (c) 2019 cmiot
 Licensed under LGPLv2.1 or later
 ```
 

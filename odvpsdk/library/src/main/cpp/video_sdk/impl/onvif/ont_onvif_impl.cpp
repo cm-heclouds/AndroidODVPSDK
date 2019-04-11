@@ -490,10 +490,6 @@ _end:
 
 int ont_onvifdevice_live_stream_play(void *playctx, const char* push_url, const char* deviceid)
 {
-#if 0 /* unused variable */
-    int level = 4;
-#endif
-
     struct ont_timeval tv;
     ont_gettimeofday(&tv, NULL);
     unsigned long ts = (tv.tv_usec / 1000 + tv.tv_sec * 1000);

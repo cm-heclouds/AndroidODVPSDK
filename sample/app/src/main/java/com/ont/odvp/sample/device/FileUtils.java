@@ -16,21 +16,22 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 
 public class FileUtils {
     private static final String TAG = "FileUtils";
     private static final String SUFFIX_MP4 = ".mp4";
-    private static final SimpleDateFormat mp4DateFormat =  new SimpleDateFormat("yyyyMMdd'T'HHmmss.SSS'Z'");
-    private static final SimpleDateFormat outputFormat =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat mp4DateFormat =  new SimpleDateFormat("yyyyMMdd'T'HHmmss.SSS'Z'", Locale.CHINA);
+    private static final SimpleDateFormat outputFormat =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
     private static MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-    private static String mediaDir;
+//    private static String mediaDir;
 
     public static void scanDir(Context context, int channalId, String pathDir, List<VodInfo> vodInfoList) {
 
         mp4DateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-        mediaDir = pathDir;
+//        mediaDir = pathDir;
         dfsScanDir(context, channalId, pathDir, vodInfoList);
     }
 

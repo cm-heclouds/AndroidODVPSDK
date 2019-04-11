@@ -9,5 +9,7 @@ public interface IGLViewEventListener {
 
     void onGetCameraSupportResolutions();
     void onChangeCameraConfirmResolution(boolean isResolutionChange);
-    void onGetVideoFrame(byte[] data, int width, int height);
+    void onGetVideoFrame(byte[] data, boolean flip, int rotation, int width, int height);
+    void onCameraAutoFocusCallback(boolean success);
+    void onCameraOpen();
 }

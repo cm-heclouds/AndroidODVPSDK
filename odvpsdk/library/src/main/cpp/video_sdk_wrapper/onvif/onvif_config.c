@@ -27,20 +27,45 @@ int  device_cfg_initilize(const char * config_buf)
 	/*
 	 * Get onvif channels
 	 */
-	cJSON *item;
-	int j = cJSON_GetArraySize(cJSON_GetObjectItem(json, "onvif"));
+	int j = 0;
+	if (cJSON_HasObjectItem(json, "onvif")) {
+		j = cJSON_GetArraySize(cJSON_GetObjectItem(json, "onvif"));
+	}
 	onvif_cfg.channelnum = j;
 	onvif_cfg.channels = ont_platform_malloc(j * sizeof(struct _onvif_channel));
 
+	cJSON *item;
 	for (int i = 0; i < j; i++)
 	{
-		item = cJSON_GetArrayItem(cJSON_GetObjectItem(json, "onvif"), i);
-		url = cJSON_GetObjectItem(item, "url")->valuestring;
-		user = cJSON_GetObjectItem(item, "user")->valuestring;
-		pass = cJSON_GetObjectItem(item, "passwd")->valuestring;
-		title = cJSON_GetObjectItem(item, "title")->valuestring;
-		desc = cJSON_GetObjectItem(item, "desc")->valuestring;
-		onvif_cfg.channels[i].channelid = cJSON_GetObjectItem(item, "channel_id")->valueint;
+		if (cJSON_HasObjectItem(json, "onvif")) {
+			item = cJSON_GetArrayItem(cJSON_GetObjectItem(json, "onvif"), i);
+		}
+
+		if (cJSON_HasObjectItem(item, "url")) {
+			url = cJSON_GetObjectItem(item, "url")->valuestring;
+		}
+
+		if (cJSON_HasObjectItem(item, "user")) {
+			user = cJSON_GetObjectItem(item, "user")->valuestring;
+		}
+
+		if (cJSON_HasObjectItem(item, "passwd")) {
+			pass = cJSON_GetObjectItem(item, "passwd")->valuestring;
+		}
+
+		if (cJSON_HasObjectItem(item, "title")) {
+			title = cJSON_GetObjectItem(item, "title")->valuestring;
+		}
+
+		if (cJSON_HasObjectItem(item, "desc")) {
+			desc = cJSON_GetObjectItem(item, "desc")->valuestring;
+
+		}
+
+		if (cJSON_HasObjectItem(item, "channel_id")) {
+			onvif_cfg.channels[i].channelid = cJSON_GetObjectItem(item, "channel_id")->valueint;
+		}
+
 		ont_platform_snprintf(onvif_cfg.channels[i].url, sizeof(onvif_cfg.channels[i].url), url);
 		ont_platform_snprintf(onvif_cfg.channels[i].user, sizeof(onvif_cfg.channels[i].user), user);
 		ont_platform_snprintf(onvif_cfg.channels[i].pass, sizeof(onvif_cfg.channels[i].pass), pass);

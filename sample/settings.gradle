@@ -1,1 +1,16 @@
+def initEnvironment(){
+    Properties properties = new Properties()
+    File propertyFile = new File(rootDir.getAbsolutePath() + "/build.properties")
+    properties.load(propertyFile.newDataInputStream())
+    gradle.ext.odvpVersion = properties.getProperty('build.odvp.version')
+    gradle.ext.onvifType = properties.getProperty('build.onvif.type')
+    gradle.ext.odvpName = gradle.ext.onvifType == "0" ? 'odvp' : 'odvp-onvif'
+    gradle.ext.appVersion = properties.getProperty('build.app.version')
+    gradle.ext.appVersionCode = properties.getProperty('build.app.version.code').toInteger()
+    gradle.ext.minSdkVersion = properties.getProperty('min.sdk.version').toInteger()
+    gradle.ext.targetSdkVersion = properties.getProperty('target.sdk.version').toInteger()
+    gradle.ext.compileSdkVersion = properties.getProperty('compile.sdk.version').toInteger()
+    gradle.ext.supportLibraryVersion = properties.getProperty('support.library.version')
+}
+initEnvironment()
 include ':app'
